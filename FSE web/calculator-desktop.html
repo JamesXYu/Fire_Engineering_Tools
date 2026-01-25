@@ -28,7 +28,17 @@
     </div>
   </div>
 
+  <!-- Calculator Registry -->
+  <script src="calculators/registry.js"></script>
+  <!-- Calculators -->
+  <script src="calculators/mergeflow.js"></script>
+  <!-- Main Application -->
   <script src="script.js"></script>
+  <!-- Initialize Calculators -->
+  <script>
+    // Register all calculators
+    CalculatorRegistry.register(MergeFlowCalculator);
+  </script>
 </body>
 </html>
 
