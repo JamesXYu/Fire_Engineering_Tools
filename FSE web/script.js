@@ -120,70 +120,26 @@ function updateTheme() {
   themeToggle.textContent = state.theme === 'dark' ? '☀️' : '🌙';
 }
 
-// Get number of inputs for each calculator type
-function getInputCount(windowType) {
-  switch (windowType) {
-    case 'mergeflow':
-      return 2; // Number of People, Size of Stair
-    case 'mergeflow-help':
-      return 0; // Help window has no inputs
-    default:
-      return 0;
-  }
-}
-
-// Get number of outputs for each calculator type
-function getOutputCount(windowType) {
-  switch (windowType) {
-    case 'mergeflow':
-      return 3; // Merging Flow Result, Effective Width, Flow Rate
-    case 'mergeflow-help':
-      return 0; // Help window has no outputs
-    default:
-      return 0;
-  }
-}
-
 // Get minimum window size based on calculator type
 function getMinimumSize(windowType) {
-  // Base dimensions
-  const titleBarHeight = 40;
-  const windowContentPadding = 32; // 16px top + 16px bottom
-  const formGap = 15; // Gap between form sections
-  const inputSectionHeight = 44; // Height of input section (label + input on same line, ~44px for input height)
-  const outputSectionHeight = 44; // Height of output section (label + input + detail text, ~44px input + ~20px detail)
-  const dividerHeight = 7; // Divider height (3px margin top + 1px line + 3px margin bottom)
-  const actionsHeight = 64; // Button height + gap
-  
-  // Calculate minimum width
-  let minWidth = 400; // Base minimum width
-  if (windowType === 'mergeflow-help') {
-    minWidth = 500; // Help content needs more width
+  // Check if it's a help window
+  if (windowType.endsWith('-help')) {
+    const baseType = windowType.replace('-help', '');
+    const calculator = CalculatorRegistry.get(baseType);
+    if (calculator) {
+      return { width: 500, height: 600 }; // Help windows have fixed size
+    }
+    return { width: 500, height: 600 };
   }
   
-  // Calculate minimum height dynamically based on number of inputs and outputs
-  const inputCount = getInputCount(windowType);
-  const outputCount = getOutputCount(windowType);
-  const totalFieldCount = inputCount + outputCount;
-  
-  if (windowType === 'mergeflow-help') {
-    // Help window has fixed minimum size
-    return { width: minWidth, height: 600 };
+  // Get calculator from registry
+  const calculator = CalculatorRegistry.get(windowType);
+  if (calculator && calculator.getMinimumSize) {
+    return calculator.getMinimumSize();
   }
   
-  if (totalFieldCount === 0) {
-    return { width: minWidth, height: 200 };
-  }
-  
-  // Calculate height: title bar + padding + (input sections + output sections + gaps) + divider + actions
-  // Input sections are smaller, output sections include detail text
-  const inputSectionsHeight = inputCount * inputSectionHeight;
-  const outputSectionsHeight = outputCount * outputSectionHeight;
-  const totalSectionsHeight = inputSectionsHeight + outputSectionsHeight;
-  const gapsHeight = (totalFieldCount + 1) * formGap; // Gaps: before first, between sections, before actions
-  const minHeight = titleBarHeight + windowContentPadding + totalSectionsHeight + gapsHeight + dividerHeight + actionsHeight + 5;
-  
-  return { width: minWidth, height: minHeight };
+  // Default minimum size
+  return { width: 400, height: 200 };
 }
 
 // Window Management
@@ -237,7 +193,7 @@ function closeWindow(id) {
   const window = state.windows.find(w => w.id === id);
   if (window) {
     // If closing a source window, also close its attached help windows
-    if (window.type === 'mergeflow') {
+    if (!window.type.endsWith('-help')) {
       const attachedHelpWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
       attachedHelpWindows.forEach(helpWindow => {
         state.windows = state.windows.filter(w => w.id !== helpWindow.id);
@@ -330,7 +286,7 @@ function toggleMinimize(id) {
     }
     
     // If minimizing a source window, also minimize attached help windows
-    if (window.type === 'mergeflow') {
+    if (!window.type.endsWith('-help')) {
       const attachedHelpWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
       attachedHelpWindows.forEach(helpWindow => {
         helpWindow.minimized = window.minimized;
@@ -349,7 +305,7 @@ function toggleMaximize(id) {
     if (!window.maximized) {
       focusWindow(id);
       // When unmaximizing, reposition attached help windows
-      if (window.type === 'mergeflow') {
+      if (!window.type.endsWith('-help')) {
         const attachedHelpWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
         attachedHelpWindows.forEach(helpWindow => {
           const spacing = 20;
@@ -406,14 +362,11 @@ function saveInputValues() {
   const savedValues = {};
   state.windows.forEach(window => {
     if (window.minimized) return;
+    if (window.type.endsWith('-help')) return; // Skip help windows
     
-    savedValues[window.id] = {};
-    
-    if (window.type === 'mergeflow') {
-      const peopleEl = document.getElementById(`people-${window.id}`);
-      const stairEl = document.getElementById(`stair-${window.id}`);
-      if (peopleEl) savedValues[window.id].people = peopleEl.value;
-      if (stairEl) savedValues[window.id].stair = stairEl.value;
+    const calculator = CalculatorRegistry.get(window.type);
+    if (calculator && calculator.saveInputValues) {
+      savedValues[window.id] = calculator.saveInputValues(window.id);
     }
   });
   return savedValues;
@@ -423,21 +376,13 @@ function saveInputValues() {
 function restoreInputValues(savedValues) {
   Object.keys(savedValues).forEach(windowId => {
     const values = savedValues[windowId];
-    
     const window = state.windows.find(w => w.id === windowId);
     if (!window || window.minimized) return;
+    if (window.type.endsWith('-help')) return; // Skip help windows
     
-    if (window.type === 'mergeflow') {
-      const peopleEl = document.getElementById(`people-${windowId}`);
-      const stairEl = document.getElementById(`stair-${windowId}`);
-      if (peopleEl && values.people !== undefined) {
-        peopleEl.value = values.people;
-        if (values.people) calcMergeFlow(windowId);
-      }
-      if (stairEl && values.stair !== undefined) {
-        stairEl.value = values.stair;
-        if (values.stair) calcMergeFlow(windowId);
-      }
+    const calculator = CalculatorRegistry.get(window.type);
+    if (calculator && calculator.restoreInputValues) {
+      calculator.restoreInputValues(windowId, values);
     }
   });
 }
@@ -470,7 +415,7 @@ function renderWindows() {
           <div class="window-controls">
             <button class="control-btn minimize" data-window-id="${window.id}" data-action="minimize" title="Minimize">−</button>
             <button class="control-btn maximize" data-window-id="${window.id}" data-action="maximize" title="Maximize">${window.maximized ? '❐' : '□'}</button>
-            <button class="control-btn close" data-window-id="${window.id}" data-action="close" title="Close">×</button>
+            <button class="control-btn close" data-window-id="${window.id}" data-action="close" title="Close">╳</button>
           </div>
         </div>
         <div class="window-content">
@@ -487,10 +432,14 @@ function renderWindows() {
   // Restore input values after re-rendering
   restoreInputValues(savedValues);
   
-  // Initialize output fields for mergeflow calculators
+  // Initialize calculators
   state.windows.forEach(window => {
-    if (window.type === 'mergeflow' && !window.minimized) {
-      calcMergeFlow(window.id);
+    if (window.minimized) return;
+    if (window.type.endsWith('-help')) return; // Skip help windows
+    
+    const calculator = CalculatorRegistry.get(window.type);
+    if (calculator && calculator.calculate) {
+      calculator.calculate(window.id);
     }
   });
 }
@@ -594,16 +543,22 @@ function attachWindowEvents() {
     // Handle input event (typing)
     input.addEventListener('input', () => {
       const window = state.windows.find(w => w.id === windowId);
-      if (window && window.type === 'mergeflow') {
-        calcMergeFlow(windowId);
+      if (window && !window.type.endsWith('-help')) {
+        const calculator = CalculatorRegistry.get(window.type);
+        if (calculator && calculator.calculate) {
+          calculator.calculate(windowId);
+        }
       }
     });
     
     // Handle change event (spinner buttons, enter key, blur, etc.)
     input.addEventListener('change', () => {
       const window = state.windows.find(w => w.id === windowId);
-      if (window && window.type === 'mergeflow') {
-        calcMergeFlow(windowId);
+      if (window && !window.type.endsWith('-help')) {
+        const calculator = CalculatorRegistry.get(window.type);
+        if (calculator && calculator.calculate) {
+          calculator.calculate(windowId);
+        }
       }
     });
     
@@ -616,8 +571,11 @@ function attachWindowEvents() {
       if (input.value !== lastValue) {
         lastValue = input.value;
         const window = state.windows.find(w => w.id === windowId);
-        if (window && window.type === 'mergeflow') {
-          calcMergeFlow(windowId);
+        if (window && !window.type.endsWith('-help')) {
+          const calculator = CalculatorRegistry.get(window.type);
+          if (calculator && calculator.calculate) {
+            calculator.calculate(windowId);
+          }
         }
       }
     };
@@ -650,8 +608,11 @@ function attachWindowEvents() {
       e.stopPropagation();
       e.preventDefault();
       const window = state.windows.find(w => w.id === windowId);
-      if (window && window.type === 'mergeflow') {
-        clearMergeFlow(windowId);
+      if (window && !window.type.endsWith('-help')) {
+        const calculator = CalculatorRegistry.get(window.type);
+        if (calculator && calculator.clear) {
+          calculator.clear(windowId);
+        }
       }
     });
   });
@@ -663,8 +624,8 @@ function attachWindowEvents() {
       e.stopPropagation();
       e.preventDefault();
       const window = state.windows.find(w => w.id === windowId);
-      if (window && window.type === 'mergeflow') {
-        openMergeFlowHelp(windowId);
+      if (window && !window.type.endsWith('-help')) {
+        openHelpWindow(windowId);
       }
     });
   });
@@ -680,188 +641,36 @@ function attachWindowEvents() {
 }
 
 function getCalculatorContent(type, windowId) {
-  switch (type) {
-    case 'mergeflow':
-      return getMergeFlowCalculatorHTML(windowId);
-    case 'mergeflow-help':
-      return getMergeFlowHelpHTML(windowId);
-    default:
-      return '';
-  }
-}
-
-function getMergeFlowCalculatorHTML(windowId) {
-  return `
-    <div class="form-calculator" id="calc-${windowId}">
-      <div class="calc-input-section">
-        <div class="calc-section">
-          <label class="calc-label">Number of People</label>
-          <input type="number" class="calc-input" id="people-${windowId}" placeholder="Enter number of people" min="0" data-window-id="${windowId}">
-        </div>
-        <div class="calc-section">
-          <label class="calc-label">Size of Stair (mm)</label>
-          <input type="number" class="calc-input" id="stair-${windowId}" placeholder="Enter stair width in mm" min="0" data-window-id="${windowId}">
-        </div>
-      </div>
-      
-      <div class="calc-divider">
-        <div class="divider-line"></div>
-        <div class="divider-label">Results</div>
-        <div class="divider-line"></div>
-      </div>
-      
-      <div class="calc-output-section">
-        <div class="calc-section">
-          <label class="calc-label">Result</label>
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-            <div class="calc-output-wrapper">
-              <input type="text" class="calc-output" id="flow-capacity-${windowId}" placeholder="—" readonly>
-              <span class="calc-output-unit">people/min</span>
-            </div>
-          </div>
-        </div>
-        <div class="calc-section">
-          <label class="calc-label">Effective Width</label>
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-            <div class="calc-output-wrapper">
-              <input type="text" class="calc-output" id="effective-width-${windowId}" placeholder="—" readonly>
-              <span class="calc-output-unit">mm</span>
-            </div>
-          </div>
-        </div>
-        <div class="calc-section">
-          <label class="calc-label">Flow Rate</label>
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-            <div class="calc-output-wrapper">
-              <input type="text" class="calc-output" id="flow-rate-${windowId}" placeholder="—" readonly>
-              <span class="calc-output-unit">people/m</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="calc-actions" style="position: relative; display: flex; justify-content: space-between;">
-        <button class="action-btn clear-btn" data-window-id="${windowId}" >Clear</button>
-        <button class="action-btn help-btn" data-window-id="${windowId}" style="background: var(--primary-color); color: white;">ℹ️ Show detail</button>
-      </div>
-    </div>
-  `;
-}
-
-function getMergeFlowHelpHTML(windowId) {
-  return `
-    <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-      <h3 style="margin-bottom: 20px; color: var(--text-primary);">ADB Merging Flow Calculation Process</h3>
-      
-      <div style="margin-bottom: 20px;">
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Step 1: Input Parameters</h4>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          Enter the number of people and the width of the stair in millimeters.
-        </p>
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Step 2: Calculate Flow Capacity</h4>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          The flow capacity is calculated using the formula:
-        </p>
-        <div class="math-formula">Flow Capacity = (Stair Width (mm) / 5.5) × Number of People</div>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          This determines the maximum flow rate through the stairway.
-        </p>
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Step 3: Determine Effective Width</h4>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          The effective width is the actual usable width of the stair after accounting for handrails and other obstructions.
-          In this calculation, it is taken as the input stair width:
-        </p>
-        <div class="math-formula">Effective Width = Stair Width (mm)</div>
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Step 4: Calculate Flow Rate</h4>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          The flow rate is calculated as the number of people per meter of width:
-        </p>
-        <div class="math-formula">Flow Rate = Number of People / Stair Width (m)</div>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          This provides a measure of the density of people flow through the escape route.
-        </p>
-      </div>
-      
-      <div style="margin-bottom: 20px;">
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Step 5: Result Interpretation</h4>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          The merging flow result indicates the capacity of the escape route. This value should be compared against
-          building regulations requirements to ensure adequate means of escape.
-        </p>
-      </div>
-      
-      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--window-border);">
-        <p style="color: var(--text-secondary); font-size: 12px; font-style: italic;">
-          Note: This is a placeholder calculation process. The actual ADB merging flow formula may need refinement
-          based on specific building regulations and standards.
-        </p>
-      </div>
-    </div>
-  `;
-}
-
-// ADB Merging Flow Calculation
-// Based on Approved Document B merging flow calculations
-function calcMergeFlow(windowId) {
-  const peopleEl = document.getElementById(`people-${windowId}`);
-  const stairEl = document.getElementById(`stair-${windowId}`);
-  const flowCapacityEl = document.getElementById(`flow-capacity-${windowId}`);
-  const effectiveWidthEl = document.getElementById(`effective-width-${windowId}`);
-  const flowRateEl = document.getElementById(`flow-rate-${windowId}`);
-  
-  if (!peopleEl || !stairEl || !flowCapacityEl || !effectiveWidthEl || !flowRateEl) return;
-  
-  const numberOfPeople = parseFloat(peopleEl.value) || 0;
-  const stairWidth = parseFloat(stairEl.value) || 0;
-  
-  // Always show output fields, but with placeholder if no input
-  if (!numberOfPeople || !stairWidth) {
-    flowCapacityEl.value = '';
-    flowCapacityEl.placeholder = '—';
-    effectiveWidthEl.value = '';
-    effectiveWidthEl.placeholder = '—';
-    flowRateEl.value = '';
-    flowRateEl.placeholder = '—';
-    return;
+  // Check if it's a help window
+  if (type.endsWith('-help')) {
+    const baseType = type.replace('-help', '');
+    const calculator = CalculatorRegistry.get(baseType);
+    if (calculator && calculator.getHelpHTML) {
+      return calculator.getHelpHTML(windowId);
+    }
+    return '';
   }
   
-  // ADB Merging Flow calculation
-  // Flow capacity = (Stair width in mm / 5.5) * number of people
-  // This is a simplified version - you can refine the formula as needed
-  const flowCapacity = (stairWidth / 5.5) * numberOfPeople;
-  const effectiveWidth = stairWidth;
-  const flowRate = numberOfPeople / (stairWidth / 1000); // people per meter
+  // Get calculator HTML from registry
+  const calculator = CalculatorRegistry.get(type);
+  if (calculator && calculator.getHTML) {
+    return calculator.getHTML(windowId);
+  }
   
-  // Update output fields
-  flowCapacityEl.value = flowCapacity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  flowCapacityEl.placeholder = '';
-  effectiveWidthEl.value = effectiveWidth.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  effectiveWidthEl.placeholder = '';
-  flowRateEl.value = flowRate.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  flowRateEl.placeholder = '';
+  return '';
 }
 
-function clearMergeFlow(windowId) {
-  const peopleEl = document.getElementById(`people-${windowId}`);
-  const stairEl = document.getElementById(`stair-${windowId}`);
-  if (peopleEl) peopleEl.value = '';
-  if (stairEl) stairEl.value = '';
-  calcMergeFlow(windowId);
-}
-
-// Open help window for merge flow calculation
-function openMergeFlowHelp(sourceWindowId) {
+// Generic help window opener
+function openHelpWindow(sourceWindowId) {
+  const sourceWindow = state.windows.find(w => w.id === sourceWindowId);
+  if (!sourceWindow) return;
+  
+  const helpType = `${sourceWindow.type}-help`;
+  const calculator = CalculatorRegistry.get(sourceWindow.type);
+  if (!calculator || !calculator.getHelpHTML) return;
+  
   // Check if help window already exists for this source window
-  const existingHelpWindow = state.windows.find(w => w.sourceWindowId === sourceWindowId && w.type === 'mergeflow-help');
+  const existingHelpWindow = state.windows.find(w => w.sourceWindowId === sourceWindowId && w.type === helpType);
   if (existingHelpWindow) {
     // Focus existing help window
     focusWindow(existingHelpWindow.id);
@@ -871,10 +680,8 @@ function openMergeFlowHelp(sourceWindowId) {
     return;
   }
   
-  const sourceWindow = state.windows.find(w => w.id === sourceWindowId);
-  if (!sourceWindow) return;
-  
-  const helpWindowId = openWindow('mergeflow-help', 'Merging Flow Calculation Process');
+  const helpTitle = calculator.name ? `${calculator.name} - Help` : 'Help';
+  const helpWindowId = openWindow(helpType, helpTitle);
   
   // Position help window next to source window
   setTimeout(() => {
@@ -1026,9 +833,7 @@ window.toggleMinimize = toggleMinimize;
 window.toggleMaximize = toggleMaximize;
 window.startDrag = startDrag;
 window.startResize = startResize;
-window.calcMergeFlow = calcMergeFlow;
-window.clearMergeFlow = clearMergeFlow;
-window.openMergeFlowHelp = openMergeFlowHelp;
+window.openHelpWindow = openHelpWindow;
 
 // Clear all windows function
 function clearAllWindows() {
