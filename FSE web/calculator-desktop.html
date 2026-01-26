@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator Desktop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app theme-dark" id="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>FSE Tools Web</h2>
+        <div style="display: flex; gap: 4px;">
+          <button class="theme-toggle" id="themeToggle" title="Toggle Theme">🌙</button>
+          <button class="theme-toggle" id="clearAllBtn" title="Clear All Windows" style="font-size: 14px;">🗑️</button>
+        </div>
+      </div>
+      <div class="sidebar-content" id="sidebarContent">
+        <!-- Categories will be generated here -->
+      </div>
+    </div>
+    <div class="workspace" id="workspace">
+      <!-- Windows will be generated here -->
+    </div>
+  </div>
+
+  <!-- Calculator Registry -->
+  <script src="calculators/registry.js"></script>
+  <!-- Calculators -->
+  <script src="calculators/mergeflow.js"></script>
+  <script src="calculators/BSmergeflow.js"></script>
+  <!-- Main Application -->
+  <script src="script.js"></script>
+  <!-- Initialize Calculators -->
+  <script>
+    // Register all calculators
+    CalculatorRegistry.register(MergeFlowCalculator);
+    CalculatorRegistry.register(BS9999MergeFlowCalculator);
+  </script>
+</body>
+</html>
+
