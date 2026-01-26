@@ -123,6 +123,51 @@ function updateTheme() {
   themeToggle.textContent = state.theme === 'dark' ? '☀️' : '🌙';
 }
 
+// Get available viewport dimensions (workspace area)
+function getAvailableViewportSize() {
+  const workspace = document.getElementById('workspace');
+  if (!workspace) return { width: window.innerWidth, height: window.innerHeight };
+  const rect = workspace.getBoundingClientRect();
+  return { width: rect.width, height: rect.height };
+}
+
+// Adjust window size to fit within viewport if needed
+function adjustWindowSizeForViewport(windowType, minSize, requestedHeight) {
+  const viewport = getAvailableViewportSize();
+  const titleBarHeight = 40; // Height of title bar
+  const minVisibleHeight = 200; // Minimum visible height (title bar + some content)
+  
+  // Calculate maximum allowed height (viewport height - some margin for positioning)
+  const maxAllowedHeight = viewport.height - 20; // 20px margin from top/bottom
+  
+  // If minimum size is larger than viewport, use viewport height minus title bar
+  if (minSize.height > maxAllowedHeight) {
+    // Use viewport height but ensure at least title bar is visible
+    const adjustedHeight = Math.max(maxAllowedHeight, minVisibleHeight);
+    return {
+      width: minSize.width,
+      height: adjustedHeight,
+      needsScrolling: true // Flag to indicate scrolling is needed
+    };
+  }
+  
+  // If requested height is larger than viewport, cap it
+  if (requestedHeight && requestedHeight > maxAllowedHeight) {
+    return {
+      width: minSize.width,
+      height: maxAllowedHeight,
+      needsScrolling: true
+    };
+  }
+  
+  // Normal case - use requested height or minimum
+  return {
+    width: minSize.width,
+    height: requestedHeight || minSize.height,
+    needsScrolling: false
+  };
+}
+
 // Get minimum window size based on calculator type
 function getMinimumSize(windowType) {
   // Figure windows have fixed size (non-resizable)
@@ -204,6 +249,11 @@ function openWindow(type, title) {
   // Ensure window is at least minimum size
   width = Math.max(width, minSizes.width);
   height = Math.max(height, minSizes.height);
+  
+  // Adjust window size to fit within viewport if needed
+  const adjustedSize = adjustWindowSizeForViewport(type, minSizes, height);
+  width = adjustedSize.width;
+  height = adjustedSize.height;
 
   const newWindow = {
     id,
@@ -305,8 +355,16 @@ function updateWindowSize(id, width, height) {
   const window = state.windows.find(w => w.id === id);
   if (window) {
     const minSizes = getMinimumSize(window.type);
-    window.width = Math.max(width, minSizes.width);
-    window.height = Math.max(height, minSizes.height);
+    let newWidth = Math.max(width, minSizes.width);
+    let newHeight = Math.max(height, minSizes.height);
+    
+    // Adjust size to fit within viewport if needed
+    const adjustedSize = adjustWindowSizeForViewport(window.type, minSizes, newHeight);
+    newWidth = adjustedSize.width;
+    newHeight = adjustedSize.height;
+    
+    window.width = newWidth;
+    window.height = newHeight;
     renderWindows();
     // Don't save windows to storage, only sizes when closing
   }
@@ -1267,8 +1325,39 @@ function clearAllWindows() {
   }
 }
 
+// Handle window resize to adjust windows if viewport becomes smaller
+function handleViewportResize() {
+  // Check all windows and adjust if they exceed viewport
+  state.windows.forEach(window => {
+    if (window.minimized || window.maximized) return;
+    
+    const minSizes = getMinimumSize(window.type);
+    const adjustedSize = adjustWindowSizeForViewport(window.type, minSizes, window.height);
+    
+    // If window needs adjustment, update it
+    if (window.height !== adjustedSize.height || window.width !== adjustedSize.width) {
+      window.height = adjustedSize.height;
+      window.width = adjustedSize.width;
+      
+      // Also ensure window position is within viewport
+      const viewport = getAvailableViewportSize();
+      window.x = Math.max(0, Math.min(window.x, viewport.width - window.width));
+      window.y = Math.max(0, Math.min(window.y, viewport.height - 40)); // 40px for title bar
+    }
+  });
+  
+  renderWindows();
+}
+
 // Initialize
 renderSidebar();
 renderWindows();
 document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 document.getElementById('clearAllBtn').addEventListener('click', clearAllWindows);
+
+// Listen for window resize events
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(handleViewportResize, 100); // Debounce resize events
+});
