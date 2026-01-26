@@ -1,694 +1,851 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+// State Management
+const state = {
+  windows: [],
+  nextZIndex: 1000,
+  theme: 'dark',
+  isDragging: false,
+  isResizing: false,
+  dragData: null
+};
+
+// Categories Data
+const categories = [
+  {
+    id: 'b1',
+    label: 'B1',
+    expanded: true,
+    calculators: [
+      { id: 'merge-flow', label: 'Merging Flow', type: 'mergeflow', icon: '🔄' }
+    ]
+  },
+  {
+    id: 'b2',
+    label: 'B2',
+    expanded: false,
+    calculators: []
+  },
+  {
+    id: 'b3',
+    label: 'B3',
+    expanded: false,
+    calculators: []
+  },
+  {
+    id: 'b4',
+    label: 'B4',
+    expanded: false,
+    calculators: []
+  },
+  {
+    id: 'b5',
+    label: 'B5',
+    expanded: false,
+    calculators: []
+  },
+];
+
+// Load from localStorage (only theme, not windows - windows don't persist between sessions)
+function loadFromStorage() {
+  try {
+    // Clear ALL old window data if it exists (cleanup)
+    localStorage.removeItem('calculator-windows');
+    
+    // Also clear any calculator type state that might have window data
+    ['mergeflow'].forEach(type => {
+      const saved = localStorage.getItem(`calculator-${type}-state`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Only keep position/size, remove any window data
+          if (parsed.id || parsed.type || parsed.minimized !== undefined) {
+            localStorage.setItem(`calculator-${type}-state`, JSON.stringify({
+              x: parsed.x || 100,
+              y: parsed.y || 100,
+              width: parsed.width || 400,
+              height: parsed.height || 500
+            }));
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    });
+    
+    const saved = localStorage.getItem('calculator-settings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state.theme = parsed.theme || 'dark';
+    }
+  } catch (e) {
+    console.error('Failed to load from localStorage', e);
+  }
 }
 
-:root {
-  /* Light theme */
-  --light-bg: #ffffff;
-  --light-sidebar-bg: #f3f3f3;
-  --light-window-bg: #ffffff;
-  --light-title-bar-bg: #f3f3f3;
-  --light-text-primary: #1e1e1e;
-  --light-text-secondary: #6e6e6e;
-  --light-border: #e0e0e0;
-  --light-button-hover: #e8e8e8;
-  --light-primary-color: #00a19b;
+// Save to localStorage (only theme, not windows)
+function saveToStorage() {
+  try {
+    localStorage.setItem('calculator-settings', JSON.stringify({
+      theme: state.theme
+    }));
+  } catch (e) {
+    console.error('Failed to save to localStorage', e);
+  }
+}
+
+// Initialize (don't restore windows, only theme)
+// Clear any old window data from localStorage
+try {
+  localStorage.removeItem('calculator-windows');
+} catch (e) {
+  // Ignore
+}
+
+loadFromStorage();
+updateTheme();
+
+// Ensure windows array is empty on load
+state.windows = [];
+
+// Theme Management
+function toggleTheme() {
+  state.theme = state.theme === 'light' ? 'dark' : 'light';
+  updateTheme();
+  saveToStorage();
+}
+
+function updateTheme() {
+  const app = document.getElementById('app');
+  app.className = `app theme-${state.theme}`;
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+}
+
+// Get minimum window size based on calculator type
+function getMinimumSize(windowType) {
+  // Check if it's a help window
+  if (windowType.endsWith('-help')) {
+    const baseType = windowType.replace('-help', '');
+    const calculator = CalculatorRegistry.get(baseType);
+    if (calculator) {
+      return { width: 500, height: 600 }; // Help windows have fixed size
+    }
+    return { width: 500, height: 600 };
+  }
   
-  /* Dark theme (VS Code-like) */
-  --dark-bg: #1e1e1e;
-  --dark-sidebar-bg: #252526;
-  --dark-window-bg: #2d2d30;
-  --dark-title-bar-bg: #3e3e42;
-  --dark-text-primary: #cccccc;
-  --dark-text-secondary: #858585;
-  --dark-border: #3e3e42;
-  --dark-button-hover: #2a2d2e;
-  --dark-primary-color: #007acc;
-}
-
-body {
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
-  width: 100vw;
-  height: 100vh;
-}
-
-.app {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  background: var(--bg);
-  color: var(--text-primary);
-}
-
-.theme-light {
-  --bg: var(--light-bg);
-  --sidebar-bg: var(--light-sidebar-bg);
-  --sidebar-border: var(--light-border);
-  --window-bg: var(--light-window-bg);
-  --title-bar-bg: var(--light-title-bar-bg);
-  --window-border: var(--light-border);
-  --text-primary: var(--light-text-primary);
-  --text-secondary: var(--light-text-secondary);
-  --button-hover: var(--light-button-hover);
-  --primary-color: var(--light-primary-color);
+  // Get calculator from registry
+  const calculator = CalculatorRegistry.get(windowType);
+  if (calculator && calculator.getMinimumSize) {
+    return calculator.getMinimumSize();
+  }
   
-  --calc-display-bg: #f8f8f8;
-  --calc-display-border: var(--light-border);
-  --calc-btn-bg: #f0f0f0;
-  --calc-btn-hover: #e0e0e0;
-  --calc-number-bg: #ffffff;
-  --calc-number-hover: #f5f5f5;
-  --calc-operator-bg: #007acc;
-  --calc-operator-hover: #005a9e;
-  --calc-function-bg: #e8e8e8;
-  --calc-function-hover: #d8d8d8;
-  --calc-equals-bg: #007acc;
-  --calc-equals-hover: #005a9e;
+  // Default minimum size
+  return { width: 400, height: 200 };
+}
+
+// Window Management
+function openWindow(type, title) {
+  const id = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const defaultSize = { width: 400, height: 500 };
+  const minSizes = getMinimumSize(type);
   
-  --input-bg: #ffffff;
-  --input-border: var(--light-border);
-  --result-card-bg: #f8f8f8;
-  --result-card-border: var(--light-border);
-  --result-increase-bg: #e8f5e9;
-  --result-increase-border: #4caf50;
-  --result-decrease-bg: #ffebee;
-  --result-decrease-border: #f44336;
-}
+  let x = 100 + state.windows.length * 30;
+  let y = 100 + state.windows.length * 30;
+  let width = defaultSize.width;
+  let height = defaultSize.height;
 
-.theme-dark {
-  --bg: var(--dark-bg);
-  --sidebar-bg: var(--dark-sidebar-bg);
-  --sidebar-border: var(--dark-border);
-  --window-bg: var(--dark-window-bg);
-  --title-bar-bg: var(--dark-title-bar-bg);
-  --window-border: var(--dark-border);
-  --text-primary: var(--dark-text-primary);
-  --text-secondary: var(--dark-text-secondary);
-  --button-hover: var(--dark-button-hover);
-  --primary-color: var(--dark-primary-color);
+  try {
+    const saved = localStorage.getItem(`calculator-${type}-state`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      x = parsed.x || x;
+      y = parsed.y || y;
+      width = parsed.width || width;
+      height = parsed.height || height;
+    }
+  } catch (e) {
+    // Ignore
+  }
   
-  --calc-display-bg: #1e1e1e;
-  --calc-display-border: var(--dark-border);
-  --calc-btn-bg: #3c3c3c;
-  --calc-btn-hover: #4a4a4a;
-  --calc-number-bg: #2d2d30;
-  --calc-number-hover: #3c3c3c;
-  --calc-operator-bg: #007acc;
-  --calc-operator-hover: #005a9e;
-  --calc-function-bg: #3c3c3c;
-  --calc-function-hover: #4a4a4a;
-  --calc-equals-bg: #007acc;
-  --calc-equals-hover: #005a9e;
+  // Ensure window is at least minimum size
+  width = Math.max(width, minSizes.width);
+  height = Math.max(height, minSizes.height);
+
+  const newWindow = {
+    id,
+    type,
+    title,
+    x,
+    y,
+    width,
+    height,
+    zIndex: state.nextZIndex++,
+    minimized: false,
+    maximized: false
+  };
+
+  state.windows.push(newWindow);
+  renderWindows();
+  // Don't save windows to storage, only positions/sizes
+  return id;
+}
+
+function closeWindow(id) {
+  const window = state.windows.find(w => w.id === id);
+  if (window) {
+    // If closing a source window, also close its attached help windows
+    if (!window.type.endsWith('-help')) {
+      const attachedHelpWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
+      attachedHelpWindows.forEach(helpWindow => {
+        state.windows = state.windows.filter(w => w.id !== helpWindow.id);
+      });
+    }
+    
+    try {
+      localStorage.setItem(`calculator-${window.type}-state`, JSON.stringify({
+        x: window.x,
+        y: window.y,
+        width: window.width,
+        height: window.height
+      }));
+    } catch (e) {
+      // Ignore
+    }
+  }
+  state.windows = state.windows.filter(w => w.id !== id);
+  renderWindows();
+  // Don't save windows to storage, only positions/sizes
+}
+
+function focusWindow(id) {
+  const window = state.windows.find(w => w.id === id);
+  if (window) {
+    window.zIndex = state.nextZIndex++;
+    renderWindows();
+    // Don't save windows to storage
+  }
+}
+
+function updateWindowPosition(id, x, y) {
+  const window = state.windows.find(w => w.id === id);
+  if (window) {
+    window.x = x;
+    window.y = y;
+    
+    // If this window has attached help windows, move them too
+    const attachedWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
+    attachedWindows.forEach(attachedWindow => {
+      const spacing = 20;
+      const workspace = document.getElementById('workspace');
+      const workspaceRect = workspace.getBoundingClientRect();
+      
+      // Try to position to the right first
+      let newX = x + window.width + spacing;
+      let newY = y;
+      
+      // Make sure it fits on screen
+      if (newX + attachedWindow.width > workspaceRect.width) {
+        // If doesn't fit on right, try left side
+        newX = x - attachedWindow.width - spacing;
+        if (newX < 0) {
+          // If doesn't fit on left either, position below
+          newX = x;
+          newY = y + window.height + spacing;
+        }
+      }
+      
+      // Ensure it's within workspace bounds
+      newX = Math.max(0, Math.min(newX, workspaceRect.width - attachedWindow.width));
+      newY = Math.max(0, Math.min(newY, workspaceRect.height - 40));
+      
+      attachedWindow.x = newX;
+      attachedWindow.y = newY;
+    });
+    
+    renderWindows();
+    // Don't save windows to storage, only positions when closing
+  }
+}
+
+function updateWindowSize(id, width, height) {
+  const window = state.windows.find(w => w.id === id);
+  if (window) {
+    const minSizes = getMinimumSize(window.type);
+    window.width = Math.max(width, minSizes.width);
+    window.height = Math.max(height, minSizes.height);
+    renderWindows();
+    // Don't save windows to storage, only sizes when closing
+  }
+}
+
+function toggleMinimize(id) {
+  const window = state.windows.find(w => w.id === id);
+  if (window) {
+    window.minimized = !window.minimized;
+    if (!window.minimized) {
+      focusWindow(id);
+    }
+    
+    // If minimizing a source window, also minimize attached help windows
+    if (!window.type.endsWith('-help')) {
+      const attachedHelpWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
+      attachedHelpWindows.forEach(helpWindow => {
+        helpWindow.minimized = window.minimized;
+      });
+    }
+    
+    renderWindows();
+    // Don't save windows to storage
+  }
+}
+
+function toggleMaximize(id) {
+  const window = state.windows.find(w => w.id === id);
+  if (window) {
+    window.maximized = !window.maximized;
+    if (!window.maximized) {
+      focusWindow(id);
+      // When unmaximizing, reposition attached help windows
+      if (!window.type.endsWith('-help')) {
+        const attachedHelpWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
+        attachedHelpWindows.forEach(helpWindow => {
+          const spacing = 20;
+          const workspace = document.getElementById('workspace');
+          const workspaceRect = workspace.getBoundingClientRect();
+          
+          let newX = window.x + window.width + spacing;
+          let newY = window.y;
+          
+          if (newX + helpWindow.width > workspaceRect.width) {
+            newX = window.x - helpWindow.width - spacing;
+            if (newX < 0) {
+              newX = window.x;
+              newY = window.y + window.height + spacing;
+            }
+          }
+          
+          newX = Math.max(0, Math.min(newX, workspaceRect.width - helpWindow.width));
+          newY = Math.max(0, Math.min(newY, workspaceRect.height - 40));
+          
+          helpWindow.x = newX;
+          helpWindow.y = newY;
+        });
+      }
+    }
+    renderWindows();
+    // Don't save windows to storage
+  }
+}
+
+// Render Functions
+function renderSidebar() {
+  const sidebarContent = document.getElementById('sidebarContent');
+  sidebarContent.innerHTML = categories.map(category => `
+    <div class="category">
+      <div class="category-header" onclick="toggleCategory('${category.id}')">
+        <span class="category-icon">${category.expanded ? '▼' : '▶'}</span>
+        <span class="category-label">${category.label}</span>
+      </div>
+      <div class="category-items ${category.expanded ? '' : 'collapsed'}">
+        ${category.calculators.map(calc => `
+          <div class="calculator-item" onclick="openCalculator('${calc.type}', '${calc.label}')">
+            <span class="calculator-icon">${calc.icon}</span>
+            <span class="calculator-label">${calc.label}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Save input values before re-rendering
+function saveInputValues() {
+  const savedValues = {};
+  state.windows.forEach(window => {
+    if (window.minimized) return;
+    if (window.type.endsWith('-help')) return; // Skip help windows
+    
+    const calculator = CalculatorRegistry.get(window.type);
+    if (calculator && calculator.saveInputValues) {
+      savedValues[window.id] = calculator.saveInputValues(window.id);
+    }
+  });
+  return savedValues;
+}
+
+// Restore input values after re-rendering
+function restoreInputValues(savedValues) {
+  Object.keys(savedValues).forEach(windowId => {
+    const values = savedValues[windowId];
+    const window = state.windows.find(w => w.id === windowId);
+    if (!window || window.minimized) return;
+    if (window.type.endsWith('-help')) return; // Skip help windows
+    
+    const calculator = CalculatorRegistry.get(window.type);
+    if (calculator && calculator.restoreInputValues) {
+      calculator.restoreInputValues(windowId, values);
+    }
+  });
+}
+
+function renderWindows() {
+  // Save input values before re-rendering
+  const savedValues = saveInputValues();
   
-  --input-bg: #1e1e1e;
-  --input-border: var(--dark-border);
-  --result-card-bg: #252526;
-  --result-card-border: var(--dark-border);
-  --result-increase-bg: #1b5e20;
-  --result-increase-border: #4caf50;
-  --result-decrease-bg: #b71c1c;
-  --result-decrease-border: #f44336;
-}
-
-.sidebar {
-  width: 250px;
-  height: 100vh;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-}
-
-.sidebar-header {
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--sidebar-border);
-}
-
-.sidebar-header h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.theme-toggle {
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.theme-toggle:hover {
-  background: var(--button-hover);
-}
-
-.sidebar-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 0;
-}
-
-.category {
-  margin-bottom: 4px;
-}
-
-.category-header {
-  padding: 8px 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  user-select: none;
-  transition: background 0.2s;
-}
-
-.category-header:hover {
-  background: var(--button-hover);
-}
-
-.category-icon {
-  font-size: 10px;
-  color: var(--text-secondary);
-  width: 12px;
-}
-
-.category-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.category-items {
-  padding-left: 8px;
-  max-height: 500px;
-  overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-  opacity: 1;
-}
-
-.category-items.collapsed {
-  max-height: 0;
-  opacity: 0;
-}
-
-.calculator-item {
-  padding: 8px 16px 8px 32px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.2s;
-}
-
-.calculator-item:hover {
-  background: var(--button-hover);
-}
-
-.calculator-icon {
-  font-size: 16px;
-}
-
-.calculator-label {
-  font-size: 13px;
-  color: var(--text-primary);
-}
-
-.workspace {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background: var(--bg);
-}
-
-.calculator-window {
-  position: absolute;
-  background: var(--window-bg);
-  border: 1px solid var(--window-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: box-shadow 0.2s;
-}
-
-.calculator-window:hover {
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
-}
-
-.calculator-window.maximized {
-  border-radius: 0;
-}
-
-.window-title-bar {
-  height: 40px;
-  background: var(--title-bar-bg);
-  border-bottom: 1px solid var(--window-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  cursor: move;
-  user-select: none;
-}
-
-.window-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.window-controls {
-  display: flex;
-  gap: 8px;
-}
-
-.control-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
-  font-size: 16px;
-  transition: background 0.2s;
-}
-
-.control-btn:hover {
-  background: var(--button-hover);
-}
-
-.control-btn.close:hover {
-  background: #e81123;
-  color: white;
-}
-
-.window-content {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-  /* Prevent scroll jumping when clicking */
-  scroll-behavior: auto;
-}
-
-/* Ensure text selection works in help windows */
-.form-calculator {
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-}
-
-.resize-handle {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 0%, transparent 40%, var(--window-border) 40%, var(--window-border) 45%, transparent 45%, transparent 60%, var(--window-border) 60%, var(--window-border) 65%, transparent 65%);
-}
-
-.calculator-window-minimized {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  padding: 8px 16px;
-  background: var(--window-bg);
-  border: 1px solid var(--window-border);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--text-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s;
-}
-
-.calculator-window-minimized:hover {
-  background: var(--button-hover);
-}
-
-/* Basic Calculator Styles */
-.basic-calculator {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  gap: 16px;
-}
-
-.calculator-display {
-  background: var(--calc-display-bg);
-  border: 1px solid var(--calc-display-border);
-  border-radius: 4px;
-  padding: 16px;
-  min-height: 80px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-.display-expression {
-  font-size: 14px;
-  color: var(--text-secondary);
-  min-height: 20px;
-  text-align: right;
-  margin-bottom: 8px;
-}
-
-.display-result {
-  font-size: 32px;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: right;
-  word-break: break-all;
-}
-
-.calculator-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  flex: 1;
-}
-
-.calc-btn {
-  border: none;
-  border-radius: 4px;
-  font-size: 18px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: var(--calc-btn-bg);
-  color: var(--text-primary);
-  min-height: 50px;
-}
-
-.calc-btn:hover {
-  background: var(--calc-btn-hover);
-  transform: translateY(-1px);
-}
-
-.calc-btn:active {
-  transform: translateY(0);
-}
-
-.calc-btn.number {
-  background: var(--calc-number-bg);
-}
-
-.calc-btn.number:hover {
-  background: var(--calc-number-hover);
-}
-
-.calc-btn.operator {
-  background: var(--calc-operator-bg);
-  color: white;
-}
-
-.calc-btn.operator:hover {
-  background: var(--calc-operator-hover);
-}
-
-.calc-btn.function {
-  background: var(--calc-function-bg);
-}
-
-.calc-btn.function:hover {
-  background: var(--calc-function-hover);
-}
-
-.calc-btn.equals {
-  background: var(--calc-equals-bg);
-  color: white;
-}
-
-.calc-btn.equals:hover {
-  background: var(--calc-equals-hover);
-}
-
-/* Form Calculator Styles */
-.form-calculator {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  height: 100%;
-}
-
-.calc-section {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-}
-
-.calc-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-.calc-input {
-  padding: 12px;
-  padding-right: 5px; /* Make room for larger spinner buttons on the right */
-  border: 1px solid var(--input-border);
-  border-radius: 4px;
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: 16px;
-  transition: border-color 0.2s;
-  position: relative;
-  flex: 1;
-}
-
-/* Style spinner buttons to be bigger and positioned on the right */
-.calc-input::-webkit-outer-spin-button,
-.calc-input::-webkit-inner-spin-button {
-  opacity: 1;
-  height: 35px;
-  width: 35px;
-  cursor: pointer;
-  /* Position on the right end */
-  margin-right: 0;
-  margin-top: 0;
-  padding: 0;
-  /* Make them more visible */
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-/* Ensure spinner buttons are clickable and visible */
-.calc-input::-webkit-inner-spin-button {
-  /* Inner button (the actual clickable area) */
-  opacity: 1;
-  height: 35px;
-  width: 35px;
-}
-
-/* Firefox spinner buttons - Firefox shows spinners by default */
-
-.calc-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-/* Ensure inputs are clickable and not blocked */
-.calc-input,
-.calc-input * {
-  pointer-events: auto;
-  cursor: text;
-}
-
-/* Input and Output Sections */
-.calc-input-section,
-.calc-output-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Simple Divider */
-.calc-divider {
-  display: flex;
-  align-items: center;
-  margin: 3px 0;
-  padding: 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: var(--window-border);
-  position: relative;
-}
-
-.divider-label {
-  display: none;
-}
-
-/* Output wrapper to contain input and unit */
-.calc-output-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-/* Output fields - look like inputs but read-only */
-.calc-output {
-  padding: 12px;
-  padding-right: 70px; /* Make room for unit text */
-  border: 1px solid var(--input-border);
-  border-radius: 4px;
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: 16px;
-  transition: border-color 0.2s;
-  position: relative;
-  flex: 1;
-  cursor: default;
-  /* Make it look like input but indicate it's read-only */
-  opacity: 0.9;
-  width: 100%;
-}
-
-/* Unit text inside output field */
-.calc-output-unit {
-  position: absolute;
-  right: 12px; /* Position on the right side of the input */
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 13px;
-  color: var(--text-secondary);
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-.calc-output:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  opacity: 1;
-}
-
-.calc-output::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
-.calc-output-detail {
-  font-size: 11px;
-  color: var(--text-secondary);
-  padding-left: 2px;
-  font-style: italic;
-}
-
-/* Math formula styling - LaTeX-like block math */
-.math-formula {
-  display: block;
-  text-align: center;
-  margin: 20px 0;
-  padding: 15px;
-  font-family: 'Times New Roman', 'Times', serif;
-  font-size: 18px;
-  font-style: italic;
-  color: var(--text-primary);
-  background: var(--result-card-bg);
-  border: 1px solid var(--window-border);
-  border-radius: 4px;
-  white-space: pre-wrap;
-  line-height: 1.6;
-}
-
-/* Inline math styling */
-.math-inline {
-  font-family: 'Times New Roman', 'Times', serif;
-  font-style: italic;
-  color: var(--text-primary);
-}
-
-.calc-results {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.result-card {
-  padding: 16px;
-  border-radius: 6px;
-  background: var(--result-card-bg);
-  border: 1px solid var(--result-card-border);
-}
-
-.result-card.increase {
-  background: var(--result-increase-bg);
-  border-color: var(--result-increase-border);
-}
-
-.result-card.decrease {
-  background: var(--result-decrease-bg);
-  border-color: var(--result-decrease-border);
-}
-
-.result-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.result-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.result-detail {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.calc-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  background: var(--calc-btn-bg);
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.action-btn:hover {
-  background: var(--calc-btn-hover);
-}
+  const workspace = document.getElementById('workspace');
+  workspace.innerHTML = state.windows.map(window => {
+    if (window.minimized) {
+      return `
+        <div class="calculator-window-minimized" 
+             style="z-index: ${window.zIndex};"
+             data-window-id="${window.id}">
+          ${window.title}
+        </div>
+      `;
+    }
+    return `
+      <div class="calculator-window ${window.maximized ? 'maximized' : ''}" 
+           style="left: ${window.maximized ? '0' : window.x + 'px'}; 
+                  top: ${window.maximized ? '0' : window.y + 'px'}; 
+                  width: ${window.maximized ? '100%' : window.width + 'px'}; 
+                  height: ${window.maximized ? '100%' : window.height + 'px'}; 
+                  z-index: ${window.zIndex};"
+           data-window-id="${window.id}">
+        <div class="window-title-bar" data-window-id="${window.id}">
+          <span class="window-title">${window.title}</span>
+          <div class="window-controls">
+            <button class="control-btn minimize" data-window-id="${window.id}" data-action="minimize" title="Minimize">−</button>
+            <button class="control-btn maximize" data-window-id="${window.id}" data-action="maximize" title="Maximize">${window.maximized ? '❐' : '□'}</button>
+            <button class="control-btn close" data-window-id="${window.id}" data-action="close" title="Close">╳</button>
+          </div>
+        </div>
+        <div class="window-content">
+          ${getCalculatorContent(window.type, window.id)}
+        </div>
+        ${window.maximized || window.isAttached ? '' : '<div class="resize-handle" data-window-id="' + window.id + '"></div>'}
+      </div>
+    `;
+  }).join('');
+  
+  // Attach event listeners after rendering
+  attachWindowEvents();
+  
+  // Restore input values after re-rendering
+  restoreInputValues(savedValues);
+  
+  // Initialize calculators
+  state.windows.forEach(window => {
+    if (window.minimized) return;
+    if (window.type.endsWith('-help')) return; // Skip help windows
+    
+    const calculator = CalculatorRegistry.get(window.type);
+    if (calculator && calculator.calculate) {
+      calculator.calculate(window.id);
+    }
+  });
+}
+
+function attachWindowEvents() {
+  // Window focus
+  document.querySelectorAll('.calculator-window:not(.calculator-window-minimized)').forEach(el => {
+    const windowId = el.getAttribute('data-window-id');
+    const window = state.windows.find(w => w.id === windowId);
+    el.addEventListener('mousedown', (e) => {
+      // Don't interfere with input fields, buttons, or controls
+      if (e.target.closest('.window-controls')) return;
+      if (e.target.closest('.calc-actions')) return;
+      if (e.target.closest('.calc-input')) return;
+      if (e.target.closest('input')) return;
+      if (e.target.closest('button')) return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      
+      // Don't interfere with help window content (text selection, copying, etc.)
+      if (window && window.type === 'mergeflow-help') {
+        // Allow text selection and copying in help windows
+        // Only focus if clicking on empty space (not on text content)
+        if (e.target.closest('.window-content')) {
+          const content = e.target.closest('.window-content');
+          // If clicking on actual content (p, div, span, etc.), don't focus
+          if (e.target.tagName === 'P' || e.target.tagName === 'DIV' || 
+              e.target.tagName === 'SPAN' || e.target.tagName === 'H3' || 
+              e.target.tagName === 'H4' || e.target.closest('p') || 
+              e.target.closest('div') || e.target.closest('span') ||
+              e.target.closest('h3') || e.target.closest('h4')) {
+            return; // Don't focus, allow text selection
+          }
+        }
+      }
+      
+      focusWindow(windowId);
+    });
+  });
+  
+  // Minimized window restore
+  document.querySelectorAll('.calculator-window-minimized').forEach(el => {
+    const windowId = el.getAttribute('data-window-id');
+    el.addEventListener('click', () => toggleMinimize(windowId));
+  });
+  
+  // Title bar drag
+  document.querySelectorAll('.window-title-bar').forEach(el => {
+    const windowId = el.getAttribute('data-window-id');
+    const window = state.windows.find(w => w.id === windowId);
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.window-controls')) return;
+      // Don't allow dragging if this is an attached help window
+      if (window && window.isAttached) {
+        // Help windows are attached and move with their source window
+        return;
+      }
+      startDrag(e, windowId);
+    });
+  });
+  
+  // Control buttons
+  document.querySelectorAll('.control-btn').forEach(btn => {
+    const windowId = btn.getAttribute('data-window-id');
+    const action = btn.getAttribute('data-action');
+    
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      
+      if (action === 'close') {
+        closeWindow(windowId);
+      } else if (action === 'minimize') {
+        toggleMinimize(windowId);
+      } else if (action === 'maximize') {
+        toggleMaximize(windowId);
+      }
+    });
+  });
+  
+  // Calculator input events
+  document.querySelectorAll('.calc-input[data-window-id]').forEach(input => {
+    const windowId = input.getAttribute('data-window-id');
+    
+    // Ensure input is focusable and clickable
+    input.addEventListener('mousedown', (e) => {
+      // Don't stop propagation if clicking on spinner buttons
+      if (e.target === input || e.target.closest('input')) {
+        e.stopPropagation(); // Prevent window focus handler from interfering
+        input.focus();
+      }
+    });
+    
+    input.addEventListener('click', (e) => {
+      // Don't stop propagation if clicking on spinner buttons
+      if (e.target === input || e.target.closest('input')) {
+        e.stopPropagation(); // Prevent window focus handler from interfering
+        input.focus();
+      }
+    });
+    
+    // Handle input event (typing)
+    input.addEventListener('input', () => {
+      const window = state.windows.find(w => w.id === windowId);
+      if (window && !window.type.endsWith('-help')) {
+        const calculator = CalculatorRegistry.get(window.type);
+        if (calculator && calculator.calculate) {
+          calculator.calculate(windowId);
+        }
+      }
+    });
+    
+    // Handle change event (spinner buttons, enter key, blur, etc.)
+    input.addEventListener('change', () => {
+      const window = state.windows.find(w => w.id === windowId);
+      if (window && !window.type.endsWith('-help')) {
+        const calculator = CalculatorRegistry.get(window.type);
+        if (calculator && calculator.calculate) {
+          calculator.calculate(windowId);
+        }
+      }
+    });
+    
+    // Handle spinner button clicks - use a more reliable approach
+    // Listen for any value changes that might come from spinner buttons
+    let lastValue = input.value;
+    
+    // Use a combination of events to catch spinner button clicks
+    const checkValueChange = () => {
+      if (input.value !== lastValue) {
+        lastValue = input.value;
+        const window = state.windows.find(w => w.id === windowId);
+        if (window && !window.type.endsWith('-help')) {
+          const calculator = CalculatorRegistry.get(window.type);
+          if (calculator && calculator.calculate) {
+            calculator.calculate(windowId);
+          }
+        }
+      }
+    };
+    
+    // Check on mouseup (when spinner button is released)
+    input.addEventListener('mouseup', () => {
+      setTimeout(checkValueChange, 50);
+    });
+    
+    // Also check on focus blur (when user clicks away)
+    input.addEventListener('blur', checkValueChange);
+    
+    // Periodic check while input is focused (catches spinner changes)
+    let valueCheckInterval = null;
+    input.addEventListener('focus', () => {
+      valueCheckInterval = setInterval(checkValueChange, 100);
+    });
+    input.addEventListener('blur', () => {
+      if (valueCheckInterval) {
+        clearInterval(valueCheckInterval);
+        valueCheckInterval = null;
+      }
+    });
+  });
+  
+  // Clear button
+  document.querySelectorAll('.clear-btn').forEach(btn => {
+    const windowId = btn.getAttribute('data-window-id');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const window = state.windows.find(w => w.id === windowId);
+      if (window && !window.type.endsWith('-help')) {
+        const calculator = CalculatorRegistry.get(window.type);
+        if (calculator && calculator.clear) {
+          calculator.clear(windowId);
+        }
+      }
+    });
+  });
+  
+  // Help button
+  document.querySelectorAll('.help-btn').forEach(btn => {
+    const windowId = btn.getAttribute('data-window-id');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const window = state.windows.find(w => w.id === windowId);
+      if (window && !window.type.endsWith('-help')) {
+        openHelpWindow(windowId);
+      }
+    });
+  });
+  
+  // Resize handle
+  document.querySelectorAll('.resize-handle').forEach(handle => {
+    const windowId = handle.getAttribute('data-window-id');
+    handle.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      startResize(e, windowId);
+    });
+  });
+}
+
+function getCalculatorContent(type, windowId) {
+  // Check if it's a help window
+  if (type.endsWith('-help')) {
+    const baseType = type.replace('-help', '');
+    const calculator = CalculatorRegistry.get(baseType);
+    if (calculator && calculator.getHelpHTML) {
+      return calculator.getHelpHTML(windowId);
+    }
+    return '';
+  }
+  
+  // Get calculator HTML from registry
+  const calculator = CalculatorRegistry.get(type);
+  if (calculator && calculator.getHTML) {
+    return calculator.getHTML(windowId);
+  }
+  
+  return '';
+}
+
+// Generic help window opener
+function openHelpWindow(sourceWindowId) {
+  const sourceWindow = state.windows.find(w => w.id === sourceWindowId);
+  if (!sourceWindow) return;
+  
+  const helpType = `${sourceWindow.type}-help`;
+  const calculator = CalculatorRegistry.get(sourceWindow.type);
+  if (!calculator || !calculator.getHelpHTML) return;
+  
+  // Check if help window already exists for this source window
+  const existingHelpWindow = state.windows.find(w => w.sourceWindowId === sourceWindowId && w.type === helpType);
+  if (existingHelpWindow) {
+    // Focus existing help window
+    focusWindow(existingHelpWindow.id);
+    if (existingHelpWindow.minimized) {
+      toggleMinimize(existingHelpWindow.id);
+    }
+    return;
+  }
+  
+  const helpTitle = calculator.name ? `${calculator.name} - Help` : 'Help';
+  const helpWindowId = openWindow(helpType, helpTitle);
+  
+  // Position help window next to source window
+  setTimeout(() => {
+    const helpWindow = state.windows.find(w => w.id === helpWindowId);
+    if (helpWindow && sourceWindow) {
+      helpWindow.sourceWindowId = sourceWindowId;
+      helpWindow.isAttached = true; // Mark as attached to source window
+      
+      // Position to the right of source window
+      const workspace = document.getElementById('workspace');
+      const workspaceRect = workspace.getBoundingClientRect();
+      const spacing = 20; // Gap between windows
+      
+      let newX = sourceWindow.x + sourceWindow.width + spacing;
+      let newY = sourceWindow.y;
+      
+      // Make sure it fits on screen
+      if (newX + helpWindow.width > workspaceRect.width) {
+        // If doesn't fit on right, try left side
+        newX = sourceWindow.x - helpWindow.width - spacing;
+        if (newX < 0) {
+          // If doesn't fit on left either, position below
+          newX = sourceWindow.x;
+          newY = sourceWindow.y + sourceWindow.height + spacing;
+        }
+      }
+      
+      // Ensure it's within workspace bounds
+      newX = Math.max(0, Math.min(newX, workspaceRect.width - helpWindow.width));
+      newY = Math.max(0, Math.min(newY, workspaceRect.height - 40));
+      
+      updateWindowPosition(helpWindowId, newX, newY);
+      renderWindows();
+    }
+  }, 50);
+}
+
+// Drag and Resize
+function startDrag(e, windowId) {
+  const window = state.windows.find(w => w.id === windowId);
+  if (!window || window.maximized) return;
+  
+  e.preventDefault();
+  state.isDragging = true;
+  state.dragData = {
+    windowId,
+    startX: e.clientX,
+    startY: e.clientY,
+    initialX: window.x,
+    initialY: window.y
+  };
+  
+  document.addEventListener('mousemove', handleDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+
+function handleDrag(e) {
+  if (!state.isDragging || !state.dragData) return;
+  
+  const window = state.windows.find(w => w.id === state.dragData.windowId);
+  if (!window) return;
+  
+  const deltaX = e.clientX - state.dragData.startX;
+  const deltaY = e.clientY - state.dragData.startY;
+  
+  const workspace = document.getElementById('workspace');
+  const workspaceRect = workspace.getBoundingClientRect();
+  
+  const newX = Math.max(0, Math.min(state.dragData.initialX + deltaX, workspaceRect.width - window.width));
+  const newY = Math.max(0, Math.min(state.dragData.initialY + deltaY, workspaceRect.height - 40));
+  
+  updateWindowPosition(state.dragData.windowId, newX, newY);
+}
+
+function stopDrag() {
+  state.isDragging = false;
+  state.dragData = null;
+  document.removeEventListener('mousemove', handleDrag);
+  document.removeEventListener('mouseup', stopDrag);
+}
+
+function startResize(e, windowId) {
+  const window = state.windows.find(w => w.id === windowId);
+  if (!window) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  state.isResizing = true;
+  state.dragData = {
+    windowId,
+    startX: e.clientX,
+    startY: e.clientY,
+    initialWidth: window.width,
+    initialHeight: window.height
+  };
+  
+  document.addEventListener('mousemove', handleResize);
+  document.addEventListener('mouseup', stopResize);
+}
+
+function handleResize(e) {
+  if (!state.isResizing || !state.dragData) return;
+  
+  const window = state.windows.find(w => w.id === state.dragData.windowId);
+  if (!window) return;
+  
+  const deltaX = e.clientX - state.dragData.startX;
+  const deltaY = e.clientY - state.dragData.startY;
+  
+  const workspace = document.getElementById('workspace');
+  const workspaceRect = workspace.getBoundingClientRect();
+  
+  const minSizes = getMinimumSize(window.type);
+  const minWidth = minSizes.width;
+  const minHeight = minSizes.height;
+  const maxWidth = workspaceRect.width - window.x;
+  const maxHeight = workspaceRect.height - window.y;
+  
+  const newWidth = Math.max(minWidth, Math.min(state.dragData.initialWidth + deltaX, maxWidth));
+  const newHeight = Math.max(minHeight, Math.min(state.dragData.initialHeight + deltaY, maxHeight));
+  
+  updateWindowSize(state.dragData.windowId, newWidth, newHeight);
+}
+
+function stopResize() {
+  state.isResizing = false;
+  state.dragData = null;
+  document.removeEventListener('mousemove', handleResize);
+  document.removeEventListener('mouseup', stopResize);
+}
+
+// Global functions for onclick handlers
+window.toggleCategory = function(categoryId) {
+  const category = categories.find(c => c.id === categoryId);
+  if (category) {
+    category.expanded = !category.expanded;
+    renderSidebar();
+  }
+};
+
+window.openCalculator = function(type, title) {
+  openWindow(type, title);
+};
+
+window.toggleTheme = toggleTheme;
+window.closeWindow = closeWindow;
+window.focusWindow = focusWindow;
+window.toggleMinimize = toggleMinimize;
+window.toggleMaximize = toggleMaximize;
+window.startDrag = startDrag;
+window.startResize = startResize;
+window.openHelpWindow = openHelpWindow;
+
+// Clear all windows function
+function clearAllWindows() {
+  if (confirm('Close all calculator windows?')) {
+    state.windows = [];
+    renderWindows();
+  }
+}
+
+// Initialize
+renderSidebar();
+renderWindows();
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+document.getElementById('clearAllBtn').addEventListener('click', clearAllWindows);
 
