@@ -10,11 +10,11 @@ const ExternalfirespreadCalculator = {
   // Required: Icon (emoji or text)
   icon: '🔢',
   
-  // Store active method combination for each window (e.g., "1-4", "1-5", "2-4", "2-5", "3-4", "3-5")
+  // Store active method combination for each window (e.g., "1-4", "1-5", "2-4", "2-5")
   // Using module-level storage for better persistence
   windowMethods: ExternalfirespreadStorage,
   
-  // Store selected buttons for each row (row1: 1,2,3 and row2: 4,5)
+  // Store selected buttons for each row (row1: 1,2 and row2: 4,5)
   windowRowSelections: {},
   
   // Get the active method combination for a window (default to "1-4")
@@ -29,7 +29,7 @@ const ExternalfirespreadCalculator = {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         const savedMethod = localStorage.getItem(`externalfirespread_method_${windowId}`);
-        if (savedMethod && ['1-4', '1-5', '2-4', '2-5', '3-4', '3-5'].includes(savedMethod)) {
+        if (savedMethod && ['1-4', '1-5', '2-4', '2-5'].includes(savedMethod)) {
           // Restore from localStorage to module-level storage
           ExternalfirespreadStorage[windowId] = savedMethod;
           return savedMethod;
@@ -66,7 +66,7 @@ const ExternalfirespreadCalculator = {
     }
   },
   
-  // Set row selection (row1: 1-3, row2: 4-5)
+  // Set row selection (row1: 1-2, row2: 4-5)
   setRowSelection(windowId, row, value) {
     const currentMethod = this.getActiveMethod(windowId);
     const [currentRow1, currentRow2] = currentMethod.split('-');
@@ -111,90 +111,54 @@ const ExternalfirespreadCalculator = {
       },
       '1-5': { // Method B: 5 enabled, 2 disabled, checkbox, 3 outputs
         inputs: [
-          { id: 'input1', label: 'Input B1' },
-          { id: 'input2', label: 'Input B2' },
-          { id: 'input3', label: 'Input B3' },
-          { id: 'input4', label: 'Input B4' },
-          { id: 'input5', label: 'Input B5' },
-          { id: 'input6', label: 'Input B6', disabled: true },
-          { id: 'input7', label: 'Input B7', disabled: true }
+          { id: 'input1', label: 'Emitter Width (m)' },
+          { id: 'input2', label: 'Emitter Height (m)' },
+          { id: 'input3', label: 'Unprotected Area (%)' },
+          { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
+          { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
+          { id: 'input6', label: 'Horizontal Location (m)', disabled: true },
+          { id: 'input7', label: 'Vertical Location (m)', disabled: true }
         ],
         outputs: [
-          { id: 'output1', label: 'Output B1' },
-          { id: 'output2', label: 'Output B2' },
-          { id: 'output3', label: 'Output B3' }
+          { id: 'output1', label: 'View Factor', unit: '%' },
+          { id: 'output2', label: 'Receiver Heat Flux', unit:'kW/m²' },
+          { id: 'output3', label: 'Distance', unit: 'm' }
         ],
         hasCheckbox: true
       },
       '2-4': { // Method C: 6 enabled, 2 disabled, checkbox, 3 outputs
         inputs: [
-          { id: 'input1', label: 'Input C1' },
-          { id: 'input2', label: 'Input C2' },
-          { id: 'input3', label: 'Input C3' },
-          { id: 'input4', label: 'Input C4' },
-          { id: 'input5', label: 'Input C5' },
-          { id: 'input6', label: 'Input C6' },
-          { id: 'input7', label: 'Input C7', disabled: true },
-          { id: 'input8', label: 'Input C8', disabled: true }
+          { id: 'input1', label: 'Emitter Width (m)' },
+          { id: 'input2', label: 'Emitter Height (m)' },
+          { id: 'input3', label: 'Boundary Distance (m)' },
+          { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
+          { id: 'input5', label: 'Critical Heat Flux (kw/m²)' },
+          { id: 'input6', label: 'Angle (°)', placeholder: '90', defaultValue: 90 },
+          { id: 'input7', label: 'Horizontal Location (m)', disabled: true },
+          { id: 'input8', label: 'Vertical Location (m)', disabled: true }
         ],
         outputs: [
-          { id: 'output1', label: 'Output C1' },
-          { id: 'output2', label: 'Output C2' },
-          { id: 'output3', label: 'Output C3' }
+          { id: 'output1', label: 'View Factor', unit: '%' },
+          { id: 'output2', label: 'Receiver Heat Flux', unit: 'kW/m²'},
+          { id: 'output3', label: 'Unprotected Area' , unit: '%' }
         ],
         hasCheckbox: true
       },
       '2-5': { // Method D: 6 enabled, 2 disabled, checkbox, 3 outputs
         inputs: [
-          { id: 'input1', label: 'Input D1' },
-          { id: 'input2', label: 'Input D2' },
-          { id: 'input3', label: 'Input D3' },
-          { id: 'input4', label: 'Input D4' },
-          { id: 'input5', label: 'Input D5' },
-          { id: 'input6', label: 'Input D6' },
-          { id: 'input7', label: 'Input D7', disabled: true },
-          { id: 'input8', label: 'Input D8', disabled: true }
+          { id: 'input1', label: 'Emitter Width (m)' },
+          { id: 'input2', label: 'Emitter Height (m)' },
+          { id: 'input3', label: 'Unprotected Area (%)' },
+          { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
+          { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
+          { id: 'input6', label: 'Angle (°)' },
+          { id: 'input7', label: 'Horizontal Location (m)', disabled: true },
+          { id: 'input8', label: 'Vertical Location (m)', disabled: true }
         ],
         outputs: [
-          { id: 'output1', label: 'Output D1' },
-          { id: 'output2', label: 'Output D2' },
-          { id: 'output3', label: 'Output D3' }
-        ],
-        hasCheckbox: true
-      },
-      '3-4': { // Method E: 6 enabled, 2 disabled, checkbox, 3 outputs
-        inputs: [
-          { id: 'input1', label: 'Input E1' },
-          { id: 'input2', label: 'Input E2' },
-          { id: 'input3', label: 'Input E3' },
-          { id: 'input4', label: 'Input E4' },
-          { id: 'input5', label: 'Input E5' },
-          { id: 'input6', label: 'Input E6' },
-          { id: 'input7', label: 'Input E7', disabled: true },
-          { id: 'input8', label: 'Input E8', disabled: true }
-        ],
-        outputs: [
-          { id: 'output1', label: 'Output E1' },
-          { id: 'output2', label: 'Output E2' },
-          { id: 'output3', label: 'Output E3' }
-        ],
-        hasCheckbox: true
-      },
-      '3-5': { // Method F: 6 enabled, 2 disabled, checkbox, 3 outputs
-        inputs: [
-          { id: 'input1', label: 'Input F1' },
-          { id: 'input2', label: 'Input F2' },
-          { id: 'input3', label: 'Input F3' },
-          { id: 'input4', label: 'Input F4' },
-          { id: 'input5', label: 'Input F5' },
-          { id: 'input6', label: 'Input F6' },
-          { id: 'input7', label: 'Input F7', disabled: true },
-          { id: 'input8', label: 'Input F8', disabled: true }
-        ],
-        outputs: [
-          { id: 'output1', label: 'Output F1' },
-          { id: 'output2', label: 'Output F2' },
-          { id: 'output3', label: 'Output F3' }
+          { id: 'output1', label: 'View Factor', unit:'%' },
+          { id: 'output2', label: 'Receiver Heat Flux', unit:'kW/m²' },
+          { id: 'output3', label: 'Output D3', unit: '%'}
         ],
         hasCheckbox: true
       }
@@ -262,12 +226,14 @@ const ExternalfirespreadCalculator = {
       const disabledAttr = input.disabled ? 'disabled' : '';
       const disabledClass = input.disabled ? 'input-disabled' : '';
       const wrapperDisabledClass = input.disabled ? 'disabled' : '';
+      const inputPlaceholder = input.placeholder !== undefined ? `placeholder="${input.placeholder}"` : '';
+      const inputValue = input.defaultValue !== undefined ? `value="${input.defaultValue}"` : '';
       inputHTML += `
         <div class="calc-section ${disabledClass}">
           <label class="calc-label">${input.label}</label>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
             <div class="calc-input-wrapper ${wrapperDisabledClass}">
-              <input type="number" class="calc-input" id="${input.id}-${windowId}" min="0" data-window-id="${windowId}" ${disabledAttr} placeholder="-">
+              <input type="number" class="calc-input" id="${input.id}-${windowId}" min="0" data-window-id="${windowId}" ${disabledAttr} ${inputPlaceholder} ${inputValue}>
             </div>
           </div>
         </div>
@@ -305,7 +271,7 @@ const ExternalfirespreadCalculator = {
       <div class="form-calculator" id="calc-${windowId}">
         <!-- Method Selector Buttons - Two Rows (Combination Selection) -->
         <div class="method-selector" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--window-border);">
-          <!-- First Row: 3 buttons (select one) -->
+          <!-- First Row: 2 buttons (select one) -->
           <div style="display: flex; gap: 8px;">
             <button class="method-btn-row1 ${selections.row1 === 1 ? 'active' : ''}" 
                     data-window-id="${windowId}" 
@@ -319,14 +285,7 @@ const ExternalfirespreadCalculator = {
                     data-row="1"
                     data-value="2"
                     style="flex: 1; padding: 10px; border: 1px solid var(--window-border); border-radius: 4px; background: ${selections.row1 === 2 ? 'var(--primary-color)' : 'var(--window-bg)'}; color: ${selections.row1 === 2 ? 'white' : 'var(--text-primary)'}; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">
-              Wall
-            </button>
-            <button class="method-btn-row1 ${selections.row1 === 3 ? 'active' : ''}" 
-                    data-window-id="${windowId}" 
-                    data-row="1"
-                    data-value="3"
-                    style="flex: 1; padding: 10px; border: 1px solid var(--window-border); border-radius: 4px; background: ${selections.row1 === 3 ? 'var(--primary-color)' : 'var(--window-bg)'}; color: ${selections.row1 === 3 ? 'white' : 'var(--text-primary)'}; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;">
-              Roof
+              Perpendicular
             </button>
           </div>
           <!-- Second Row: 2 buttons (select one) -->
@@ -385,9 +344,7 @@ const ExternalfirespreadCalculator = {
       '1-4': 'A',
       '1-5': 'B',
       '2-4': 'C',
-      '2-5': 'D',
-      '3-4': 'E',
-      '3-5': 'F'
+      '2-5': 'D'
     };
     
     const methodLetter = methodMap[activeMethod] || 'A';
@@ -432,7 +389,13 @@ const ExternalfirespreadCalculator = {
       const isRequired = !input.disabled || (input.disabled && checkboxChecked);
       
       if (isRequired) {
-        const value = parseFloat(inputEl.value) || 0;
+        const raw = (inputEl.value || '').trim();
+        let value;
+        if (input.defaultValue !== undefined && raw === '') {
+          value = input.defaultValue;
+        } else {
+          value = parseFloat(inputEl.value) || 0;
+        }
         inputValues[input.id] = value;
         if (!value) {
           allInputsValid = false;
@@ -469,16 +432,73 @@ const ExternalfirespreadCalculator = {
       let yy = y / Math.sqrt(1 + y * y);
       let yx = y / Math.sqrt(1 + x * x);
       // View factor formula for parallel rectangles
-      let vf = 2 * ((xx * Math.atan(yx) + yy * Math.atan(xy))) / Math.PI * 100;
+      let vf = 2 * ((xx * Math.atan(yx) + yy * Math.atan(xy))) / Math.PI;
       return vf;
     }
 
-    // Pseudo calculations based on method
+    /**
+     * Calculate distance given view factor, width, and height.
+     * Uses binary search to invert the view factor formula (no closed-form solution).
+     * @param {number} viewFactor - View factor as percentage (0–100)
+     * @param {number} width - Width (same units as distance)
+     * @param {number} height - Height (same units as distance)
+     * @returns {number} distance
+     */
+    function calculateDistanceFromViewFactor(viewFactor, width, height) {
+      const targetVf = viewFactor;
+      let dLow = 1e-6;
+      let dHigh = 1e8;
+      const tol = 1e-9;
+      const maxIter = 100;
+
+      for (let i = 0; i < maxIter; i++) {
+        const dMid = (dLow + dHigh) / 2;
+        const vf = calculateViewFactor({ input1: width, input2: height, input3: dMid });
+        if (Math.abs(vf - targetVf) < tol) return dMid;
+        if (vf > targetVf) dLow = dMid;
+        else dHigh = dMid;
+      }
+      return (dLow + dHigh) / 2;
+    }
+
+    function calculateViewFactorCorner(w, h, d) {
+      let x = w / d;
+      let y = h / d;
+      let yy = Math.sqrt(y * y + 1);
+      let vf = (Math.atan(x) - Math.atan(x / yy) / yy) / (2 * Math.PI);
+      return vf;
+    }
+
+    /**
+     * Calculate distance given view factor (corner formula), width, and height.
+     * Inverse of calculateViewFactorCorner; uses binary search.
+     * @param {number} viewFactor - View factor as percentage (0–100), same units as output from calculateViewFactorCorner * 100
+     * @param {number} width - Width (same units as distance)
+     * @param {number} height - Height (same units as distance)
+     * @returns {number} distance
+     */
+    function calculateDistanceFromViewFactorCorner(viewFactor, width, height) {
+      const targetVf = viewFactor;
+      let dLow = 1e-6;
+      let dHigh = 1e8;
+      const tol = 1e-9;
+      const maxIter = 100;
+
+      for (let i = 0; i < maxIter; i++) {
+        const dMid = (dLow + dHigh) / 2;
+        const vf = calculateViewFactorCorner(width, height, dMid) * 100;
+        if (Math.abs(vf - targetVf) < tol) return dMid;
+        if (vf > targetVf) dLow = dMid;
+        else dHigh = dMid;
+      }
+      return (dLow + dHigh) / 2;
+    }
+
     const results = {};
     
     if (activeMethod === '1-4') {
       if (!checkboxChecked) {
-        results.output1 = calculateViewFactor(inputValues);
+        results.output1 = calculateViewFactor(inputValues) * 100;
         results.output2 = results.output1 * inputValues.input4 / 100;
         let a_check =  inputValues.input5 / results.output2;
         if(a_check < 1.0) {
@@ -492,55 +512,41 @@ const ExternalfirespreadCalculator = {
         results.output2 = (inputValues.input1 * inputValues.input2) * 1.1;
         results.output3 = (inputValues.input3 + inputValues.input4) * 1.2;
       }
-    } else if (activeMethod === '1-5') { // Method B: 5 enabled, 2 disabled, checkbox, 3 outputs
-      if (checkboxChecked) {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6 + inputValues.input7) * 1.1;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.2;
-        results.output3 = (inputValues.input3 + inputValues.input4 + inputValues.input5) * 1.3;
+    } else if (activeMethod === '1-5') {
+      if (!checkboxChecked) {
+        results.output2 = inputValues.input5 / (inputValues.input3 / 100); 
+        results.output1 = (results.output2 / inputValues.input4) * 100;
+        results.output3 = calculateDistanceFromViewFactor(results.output1, inputValues.input1, inputValues.input2);
       } else {
         results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5) * 1.1;
         results.output2 = (inputValues.input1 * inputValues.input2) * 1.2;
         results.output3 = (inputValues.input3 * inputValues.input4) * 1.3;
       }
     } else if (activeMethod === '2-4') { // Method C: 6 enabled, 2 disabled, checkbox, 3 outputs
-      if (checkboxChecked) {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6 + inputValues.input7 + inputValues.input8) * 1.2;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.3;
-        results.output3 = (inputValues.input3 + inputValues.input4 + inputValues.input5) * 1.4;
+      if (!checkboxChecked) {
+        results.output1 = calculateViewFactorCorner(inputValues.input1, inputValues.input2, inputValues.input3) * 100;
+        results.output2 = inputValues.input4 * results.output1 / 100;
+        let a_check = inputValues.input5 / results.output2;
+        if(a_check < 1.0){
+          results.output3 = a_check * 100;
+        }
+        else{
+          results.output3 = 100;
+        }
       } else {
         results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.2;
         results.output2 = (inputValues.input1 * inputValues.input2) * 1.3;
         results.output3 = (inputValues.input3 + inputValues.input4) * 1.4;
       }
     } else if (activeMethod === '2-5') { // Method D: 6 enabled, 2 disabled, checkbox, 3 outputs
-      if (checkboxChecked) {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6 + inputValues.input7 + inputValues.input8) * 1.3;
-        results.output2 = (inputValues.input1 * inputValues.input2 + inputValues.input3) * 1.4;
-        results.output3 = (inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.5;
+      if (!checkboxChecked) {
+        results.output2 = inputValues.input5 / (inputValues.input3 / 100);
+        results.output1 = (results.output2 /inputValues.input4) * 100;
+        results.output3 = calculateDistanceFromViewFactorCorner(results.output1, inputValues.input1, inputValues.input2);
       } else {
         results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.3;
         results.output2 = (inputValues.input1 * inputValues.input2) * 1.4;
         results.output3 = (inputValues.input3 + inputValues.input4) * 1.5;
-      }
-    } else if (activeMethod === '3-4') { // Method E: 6 enabled, 2 disabled, checkbox, 3 outputs
-      if (checkboxChecked) {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6 + inputValues.input7 + inputValues.input8) * 1.4;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.5;
-        results.output3 = (inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.6;
-      } else {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.4;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.5;
-        results.output3 = (inputValues.input3 + inputValues.input4 + inputValues.input5) * 1.6;
-      }
-    } else if (activeMethod === '3-5') { // Method F: 6 enabled, 2 disabled, checkbox, 3 outputs
-      if (checkboxChecked) {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6 + inputValues.input7 + inputValues.input8) * 1.5;
-        results.output2 = (inputValues.input1 * inputValues.input2 + inputValues.input3) * 1.6;
-        results.output3 = (inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.7;
-      } else {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.5;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.6;
-        results.output3 = (inputValues.input3 + inputValues.input4 + inputValues.input5) * 1.7;
       }
     }
     
@@ -652,7 +658,7 @@ const ExternalfirespreadCalculator = {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         const savedMethod = localStorage.getItem(`externalfirespread_method_${windowId}`);
-        if (savedMethod && ['1-4', '1-5', '2-4', '2-5', '3-4', '3-5'].includes(savedMethod)) {
+        if (savedMethod && ['1-4', '1-5', '2-4', '2-5'].includes(savedMethod)) {
           ExternalfirespreadStorage[windowId] = savedMethod;
           this.windowMethods[windowId] = savedMethod;
           return;
@@ -737,7 +743,7 @@ const ExternalfirespreadCalculator = {
   
   // Optional: Attach calculator-specific event handlers
   attachEvents(windowId) {
-    // Handle row 1 button clicks (buttons 1, 2, 3)
+    // Handle row 1 button clicks (buttons 1, 2)
     const row1Buttons = document.querySelectorAll(`.method-btn-row1[data-window-id="${windowId}"]`);
     row1Buttons.forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -875,9 +881,7 @@ const ExternalfirespreadCalculator = {
         '1-4': 'A',
         '1-5': 'B',
         '2-4': 'C',
-        '2-5': 'D',
-        '3-4': 'E',
-        '3-5': 'F'
+        '2-5': 'D'
       };
       
       const methodLetter = methodMap[activeMethod] || 'A';
