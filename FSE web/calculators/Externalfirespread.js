@@ -99,8 +99,8 @@ const ExternalfirespreadCalculator = {
           { id: 'input3', label: 'Boundary Distance (m)' },
           { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
           { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
-          { id: 'input6', label: 'Horizontal Location (m)', disabled: true },
-          { id: 'input7', label: 'Vertical Location (m)', disabled: true }
+          { id: 'input6', label: 'Horizontal Location (m)', disabled: true , placeholder:'0'},
+          { id: 'input7', label: 'Vertical Location (m)', disabled: true , placeholder:'0'}
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit: '%' },
@@ -116,8 +116,8 @@ const ExternalfirespreadCalculator = {
           { id: 'input3', label: 'Unprotected Area (%)' },
           { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
           { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
-          { id: 'input6', label: 'Horizontal Location (m)', disabled: true },
-          { id: 'input7', label: 'Vertical Location (m)', disabled: true }
+          { id: 'input6', label: 'Horizontal Location (m)', disabled: true, placeholder:'0' },
+          { id: 'input7', label: 'Vertical Location (m)', disabled: true , placeholder:'0'}
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit: '%' },
@@ -134,8 +134,8 @@ const ExternalfirespreadCalculator = {
           { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
           { id: 'input5', label: 'Critical Heat Flux (kw/m²)' },
           { id: 'input6', label: 'Angle (°)', placeholder: '90', defaultValue: 90 },
-          { id: 'input7', label: 'Horizontal Location (m)', disabled: true },
-          { id: 'input8', label: 'Vertical Location (m)', disabled: true }
+          { id: 'input7', label: 'Horizontal Location (m)', disabled: true, placeholder:'0' },
+          { id: 'input8', label: 'Vertical Location (m)', disabled: true, placeholder: '0' }
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit: '%' },
@@ -152,13 +152,13 @@ const ExternalfirespreadCalculator = {
           { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
           { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
           { id: 'input6', label: 'Angle (°)' },
-          { id: 'input7', label: 'Horizontal Location (m)', disabled: true },
-          { id: 'input8', label: 'Vertical Location (m)', disabled: true }
+          { id: 'input7', label: 'Horizontal Location (m)', disabled: true , placeholder:'0'},
+          { id: 'input8', label: 'Vertical Location (m)', disabled: true , placeholder:'0'}
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit:'%' },
           { id: 'output2', label: 'Receiver Heat Flux', unit:'kW/m²' },
-          { id: 'output3', label: 'Output D3', unit: '%'}
+          { id: 'output3', label: 'Distance', unit: 'm'}
         ],
         hasCheckbox: true
       }
@@ -388,6 +388,10 @@ const ExternalfirespreadCalculator = {
       // Check if input is required (not disabled, or disabled but checkbox is checked)
       const isRequired = !input.disabled || (input.disabled && checkboxChecked);
       
+      // For methods 2-4 and 2-5, input7 and input8 are offset values - they can be 0
+      const isOffsetInput = (activeMethod === '2-4' || activeMethod === '2-5') && 
+                            (input.id === 'input7' || input.id === 'input8');
+      
       if (isRequired) {
         const raw = (inputEl.value || '').trim();
         let value;
@@ -397,7 +401,9 @@ const ExternalfirespreadCalculator = {
           value = parseFloat(inputEl.value) || 0;
         }
         inputValues[input.id] = value;
-        if (!value) {
+        
+        // Don't mark offset inputs (input7, input8) as invalid even if 0 - 0 is a valid offset value
+        if (!value && !isOffsetInput) {
           allInputsValid = false;
         }
       }
@@ -461,18 +467,205 @@ const ExternalfirespreadCalculator = {
       return (dLow + dHigh) / 2;
     }
 
-    function calculateViewFactorCorner(w, h, d) {
+    function calculateViewFactorCornerPerpen(w, h, d) {
       let x = w / d;
       let y = h / d;
       let yy = Math.sqrt(y * y + 1);
       let vf = (Math.atan(x) - Math.atan(x / yy) / yy) / (2 * Math.PI);
       return vf;
     }
+    
+    function CalculateVFCorner(w, h, d){
+      let x = w / d;
+      let y = h / d;
+      let xx = x / Math.sqrt(1 + x * x);
+      let xy = x / Math.sqrt(1 + y * y);
+      let yy = y / Math.sqrt(1 + y * y);
+      let yx = y / Math.sqrt(1 + x * x);
+      let vf =  ((xx * Math.atan(yx) + yy * Math.atan(xy))) / (2 * Math.PI);
+      return vf;
+    }
+
+    function CalculateVFoffset(W, H, offw, offh, d) {
+      if (offw >= 0) {
+        if (offh >= 0) {
+          // Positive w, positive h
+          let dw = W - offw;
+          let dh = H - offh;
+          let a1 = CalculateVFCorner(offw, offh, d);
+          let a2 = CalculateVFCorner(offw, dh, d);
+          let a3 = CalculateVFCorner(dw, offh, d);
+          let a4 = CalculateVFCorner(dw, dh, d);
+          let vf = a1 + a2 + a3 + a4;
+          return vf;
+        } else {
+          // Positive w, negative h
+          let dw = W - offw;
+          let dh = H - offh; // H + h (since offh is negative)
+          let a1 = CalculateVFCorner(offw, -offh, d);
+          let a2 = CalculateVFCorner(offw, dh, d);
+          let a3 = CalculateVFCorner(dw, -offh, d);
+          let a4 = CalculateVFCorner(dw, dh, d);
+          let vf = a2 + a4 - a1 - a3;
+          return vf;
+        }
+      } else {
+        if (offh >= 0) {
+          // Negative w, positive h
+          let dw = W - offw; // W + w (since offw is negative)
+          let dh = H - offh;
+          let a1 = CalculateVFCorner(-offw, offh, d);
+          let a2 = CalculateVFCorner(-offw, dh, d);
+          let a3 = CalculateVFCorner(dw, offh, d);
+          let a4 = CalculateVFCorner(dw, dh, d);
+          let vf = a3 + a4 - a1 - a2;
+          return vf;
+        } else {
+          // Negative w, negative h
+          let dw = W - offw; // W + w (since offw is negative)
+          let dh = H - offh; // H + h (since offh is negative)
+          let a1 = CalculateVFCorner(-offw, -offh, d);
+          let a2 = CalculateVFCorner(-offw, dh, d);
+          let a3 = CalculateVFCorner(dw, -offh, d);
+          let a4 = CalculateVFCorner(dw, dh, d);
+          let vf = a4 - a1 - a2 - a3;
+          return vf;
+        }
+      }
+    }
+
+    function CalculateVFanglecorner(w, h, d, angle) {
+      let sin = Math.sin(angle * Math.PI / 180);
+      let cos = Math.cos(angle * Math.PI / 180);
+      let a = h * sin / d;
+      let b = w * sin / d;
+      let bb = (1 - b * cos) / Math.sqrt(1 + b * b - 2 * b * cos);
+      let ab = a / Math.sqrt(1 + b * b - 2 * b * cos);
+      let aa = a * cos / Math.sqrt(a * a + sin * sin);
+      let ba = (b - cos) / Math.sqrt(a * a + sin * sin);
+      let acos = cos / Math.sqrt(a * a + sin * sin);
+      let vf = (Math.atan(a) - bb * Math.atan(ab) + aa * (Math.atan(ba) + Math.atan(acos))) / (2 * Math.PI);
+      return vf;
+    }
+
+    function CalculateVFangleoffset(W, H, offw, offh, d, a) {
+      let sin = Math.sin(a * Math.PI / 180);
+      let cos = Math.cos(a * Math.PI / 180);
+      let extra = cos * d / sin;
+      console.log("extra =" + extra);
+      if(offw >= 0){
+        if(offh >= 0){ 
+          if (extra < offw){
+            let topleft = CalculateVFanglecorner(W-offw+extra, offh, d, a);
+            let topright = CalculateVFanglecorner(offw-extra, offh, d, 180-a);
+            let bottomleft = CalculateVFanglecorner(W-offw+extra, H-offh, d, a);
+            let bottomright = CalculateVFanglecorner(offw-extra, H-offh, d, 180-a);
+            let vf = topleft + topright + bottomleft + bottomright;
+            return vf;
+          } else {
+            let topbig = CalculateVFanglecorner(W - offw + extra, offh, d, a);
+            let topsmall = CalculateVFanglecorner(extra - offw, offh, d, a);
+            let bottombig = CalculateVFanglecorner(W- offw + extra, H - offh, d, a);
+            let bottomsmall = CalculateVFanglecorner(- offw + extra, H - offh, d, a);
+            let vf = topbig - topsmall + bottombig - bottomsmall;
+            return vf;
+          }
+        }else{
+          if(extra < offw){
+            let ls = CalculateVFanglecorner(W - offw + extra, -offh, d, a);
+            let rs = CalculateVFanglecorner(offw - extra, -offh, d, 180-a);
+            let lb = CalculateVFanglecorner(W - offw+extra, H-offh, d, a);
+            let rb = CalculateVFanglecorner(offw - extra, H-offh, d, 180-a);
+            let vf = lb + rb - ls - rs;
+            return vf;
+          } else {
+            let big = CalculateVFanglecorner(W - offw + extra, H - offh, d, a);
+            let medium1 = CalculateVFanglecorner(-offw + extra, H - offh, d, a);
+            let medium2 = CalculateVFanglecorner(W - offw + extra, -offh, d, a);
+            let small = CalculateVFanglecorner(- offw + extra, - offh, d, a);
+            let vf = big + small - medium1 - medium2;
+            return vf;
+          }
+        }
+      } else {
+        if (offh >= 0) {
+          // Negative w, positive h
+          let topbig = CalculateVFanglecorner(-offw + extra + W, offh, d, a);
+          let topsmall = CalculateVFanglecorner(-offw + extra, offh, d, a);
+          let bottombig = CalculateVFanglecorner(-offw + extra + W, H - offh, d, a);
+          let bottomsmall = CalculateVFanglecorner(-offw + extra, H - offh, d, a);
+          let vf = topbig - topsmall + bottombig - bottomsmall;
+          return vf;
+        } else {
+          // Negative w, negative h
+          let big = CalculateVFanglecorner(W - offw + extra, H - offh, d, a);
+          let medium1 = CalculateVFanglecorner(-offw + extra, H - offh, d, a);
+          let medium2 = CalculateVFanglecorner(W - offw + extra, -offh, d, a);
+          let small = CalculateVFanglecorner(-offw + extra, -offh, d, a);
+          let vf = big + small - medium1 - medium2;
+          return vf;
+        }
+      }
+    }
 
     /**
+     * Calculate distance given view factor (angle offset formula), width, height, offsets, and angle.
+     * Inverse of CalculateVFangleoffset; uses binary search.
+     * @param {number} viewFactor - View factor as percentage (0-100), same units as output from CalculateVFangleoffset * 100
+     * @param {number} W - Width (same units as distance)
+     * @param {number} H - Height (same units as distance)
+     * @param {number} offw - Width offset (same units as distance)
+     * @param {number} offh - Height offset (same units as distance)
+     * @param {number} angle - Angle in degrees
+     * @returns {number} distance
+     */
+    function calculateDistanceFromVFangleoffset(viewFactor, W, H, offw, offh, angle) {
+      const targetVf = viewFactor;
+      let dLow = 1e-6;
+      let dHigh = 1e8;
+      const tol = 1e-9;
+      const maxIter = 100;
+
+      for (let i = 0; i < maxIter; i++) {
+        const dMid = (dLow + dHigh) / 2;
+        const vf = CalculateVFangleoffset(W, H, offw, offh, dMid, angle) * 100;
+        if (Math.abs(vf - targetVf) < tol) return dMid;
+        if (vf > targetVf) dLow = dMid;
+        else dHigh = dMid;
+      }
+      return (dLow + dHigh) / 2;
+    }
+
+    /**
+     * Calculate distance given view factor (offset formula), width, height, and offsets.
+     * Inverse of CalculateVFoffset; uses binary search.
+     * @param {number} viewFactor - View factor (0-1), same units as output from CalculateVFoffset
+     * @param {number} W - Width (same units as distance)
+     * @param {number} H - Height (same units as distance)
+     * @param {number} offw - Width offset (same units as distance)
+     * @param {number} offh - Height offset (same units as distance)
+     * @returns {number} distance
+     */
+    function calculateDistanceFromVFoffset(viewFactor, W, H, offw, offh) {
+      const targetVf = viewFactor;
+      let dLow = 1e-6;
+      let dHigh = 1e8;
+      const tol = 1e-9;
+      const maxIter = 100;
+
+      for (let i = 0; i < maxIter; i++) {
+        const dMid = (dLow + dHigh) / 2;
+        const vf = CalculateVFoffset(W, H, offw, offh, dMid);
+        if (Math.abs(vf - targetVf) < tol) return dMid;
+        if (vf > targetVf) dLow = dMid;
+        else dHigh = dMid;
+      }
+      return (dLow + dHigh) / 2;
+    }
+    /**
      * Calculate distance given view factor (corner formula), width, and height.
-     * Inverse of calculateViewFactorCorner; uses binary search.
-     * @param {number} viewFactor - View factor as percentage (0–100), same units as output from calculateViewFactorCorner * 100
+     * Inverse of calculateViewFactorCornerPerpen; uses binary search.
+     * @param {number} viewFactor - View factor as percentage (0–100), same units as output from calculateViewFactorCornerPerpen * 100
      * @param {number} width - Width (same units as distance)
      * @param {number} height - Height (same units as distance)
      * @returns {number} distance
@@ -486,7 +679,7 @@ const ExternalfirespreadCalculator = {
 
       for (let i = 0; i < maxIter; i++) {
         const dMid = (dLow + dHigh) / 2;
-        const vf = calculateViewFactorCorner(width, height, dMid) * 100;
+        const vf = calculateViewFactorCornerPerpen(width, height, dMid) * 100;
         if (Math.abs(vf - targetVf) < tol) return dMid;
         if (vf > targetVf) dLow = dMid;
         else dHigh = dMid;
@@ -508,45 +701,90 @@ const ExternalfirespreadCalculator = {
           results.output3 = 100;
         }
       } else {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5) * 1.0;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.1;
-        results.output3 = (inputValues.input3 + inputValues.input4) * 1.2;
-      }
-    } else if (activeMethod === '1-5') {
-      if (!checkboxChecked) {
-        results.output2 = inputValues.input5 / (inputValues.input3 / 100); 
-        results.output1 = (results.output2 / inputValues.input4) * 100;
-        results.output3 = calculateDistanceFromViewFactor(results.output1, inputValues.input1, inputValues.input2);
-      } else {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5) * 1.1;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.2;
-        results.output3 = (inputValues.input3 * inputValues.input4) * 1.3;
-      }
-    } else if (activeMethod === '2-4') { // Method C: 6 enabled, 2 disabled, checkbox, 3 outputs
-      if (!checkboxChecked) {
-        results.output1 = calculateViewFactorCorner(inputValues.input1, inputValues.input2, inputValues.input3) * 100;
-        results.output2 = inputValues.input4 * results.output1 / 100;
-        let a_check = inputValues.input5 / results.output2;
-        if(a_check < 1.0){
+        results.output1 = CalculateVFoffset(inputValues.input1, inputValues.input2, inputValues.input6, inputValues.input7, inputValues.input3) * 100;
+        results.output2 = results.output1 * inputValues.input4 / 100;
+        let a_check =  inputValues.input5 / results.output2;
+        if(a_check < 1.0) {
           results.output3 = a_check * 100;
         }
         else{
           results.output3 = 100;
         }
+      }
+    } else if (activeMethod === '1-5') {
+      if (!checkboxChecked) {
+        let a = inputValues.input5 / (inputValues.input3 / 100);
+        if (a > inputValues.input4) {
+          results.output1 = 100;
+          results.output2 = inputValues.input4;
+        } else {
+          results.output2 = a;
+          results.output1 = (results.output2 / inputValues.input4) * 100;
+        }
+        results.output3 = calculateDistanceFromViewFactor(results.output1 / 100, inputValues.input1, inputValues.input2);
       } else {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.2;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.3;
-        results.output3 = (inputValues.input3 + inputValues.input4) * 1.4;
+        let a = inputValues.input5 / (inputValues.input3 / 100);
+        if (a > inputValues.input4) {
+          results.output1 = 100;
+          results.output2 = inputValues.input4;
+          results.output3 = calculateDistanceFromVFoffset(results.output1 / 100, inputValues.input1, inputValues.input2, inputValues.input6, inputValues.input7);
+        } else {
+          results.output2 = a;
+          results.output1 = (results.output2 / inputValues.input4) * 100;
+          results.output3 = calculateDistanceFromVFoffset(results.output1 / 100, inputValues.input1, inputValues.input2, inputValues.input6, inputValues.input7);
+        }
+      }
+    } else if (activeMethod === '2-4') { // Method C: 6 enabled, 2 disabled, checkbox, 3 outputs
+      if (!checkboxChecked) {
+        // When checkbox not checked, input7 and input8 are disabled - use 0,0
+        results.output1 = CalculateVFangleoffset(inputValues.input1, inputValues.input2, 0, 0, inputValues.input3, inputValues.input6) * 100;
+        results.output2 = inputValues.input4 * results.output1 / 100;
+        let a_check = inputValues.input5 / results.output2;
+        if (a_check < 1.0) {
+          results.output3 = a_check * 100;
+        } else {
+          results.output3 = 100;
+        }
+      } else {
+        // When checkbox checked, input7 and input8 are enabled - use their values
+        let offw = inputValues.input7 || 0;
+        let offh = inputValues.input8 || 0;
+        results.output1 = CalculateVFangleoffset(inputValues.input1, inputValues.input2, offw, offh, inputValues.input3, inputValues.input6) * 100;
+        results.output2 = inputValues.input4 * results.output1 / 100;
+        let a_check = inputValues.input5 / results.output2;
+        if (a_check < 1.0) {
+          results.output3 = a_check * 100;
+        } else {
+          results.output3 = 100;
+        }
       }
     } else if (activeMethod === '2-5') { // Method D: 6 enabled, 2 disabled, checkbox, 3 outputs
       if (!checkboxChecked) {
-        results.output2 = inputValues.input5 / (inputValues.input3 / 100);
-        results.output1 = (results.output2 /inputValues.input4) * 100;
-        results.output3 = calculateDistanceFromViewFactorCorner(results.output1, inputValues.input1, inputValues.input2);
+        // When checkbox not checked, input7 and input8 are disabled - use 0,0
+        let a = inputValues.input5 / (inputValues.input3 / 100);
+        if (a > inputValues.input4) {
+          results.output1 = 100;
+          results.output2 = inputValues.input4;
+        } else {
+          results.output2 = a;
+          results.output1 = (results.output2 / inputValues.input4) * 100;
+        }
+        // calculateDistanceFromVFangleoffset expects percentage (0-100), same as output1
+        results.output3 = calculateDistanceFromVFangleoffset(results.output1, inputValues.input1, inputValues.input2, 0, 0, inputValues.input6);
       } else {
-        results.output1 = (inputValues.input1 + inputValues.input2 + inputValues.input3 + inputValues.input4 + inputValues.input5 + inputValues.input6) * 1.3;
-        results.output2 = (inputValues.input1 * inputValues.input2) * 1.4;
-        results.output3 = (inputValues.input3 + inputValues.input4) * 1.5;
+        // When checkbox checked, input7 and input8 are enabled - use their values
+        let offw = inputValues.input7 || 0;
+        let offh = inputValues.input8 || 0; 
+        let a = inputValues.input5 / (inputValues.input3 / 100);
+        if (a > inputValues.input4) {
+          results.output1 = 100;
+          results.output2 = inputValues.input4;
+          results.output3 = calculateDistanceFromVFangleoffset(results.output1, inputValues.input1, inputValues.input2, offw, offh, inputValues.input6);
+        } else {
+          results.output2 = a;
+          results.output1 = (results.output2 / inputValues.input4) * 100;
+          results.output3 = calculateDistanceFromVFangleoffset(results.output1, inputValues.input1, inputValues.input2, offw, offh, inputValues.input6);
+        }
       }
     }
     
