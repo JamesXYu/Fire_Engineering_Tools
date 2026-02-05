@@ -151,7 +151,7 @@ const ExternalfirespreadCalculator = {
           { id: 'input3', label: 'Unprotected Area (%)' },
           { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
           { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
-          { id: 'input6', label: 'Angle (°)' },
+          { id: 'input6', label: 'Angle (°)', placeholder: '90', defaultValue: 90},
           { id: 'input7', label: 'Horizontal Location (m)', disabled: true , placeholder:'0'},
           { id: 'input8', label: 'Vertical Location (m)', disabled: true , placeholder:'0'}
         ],
