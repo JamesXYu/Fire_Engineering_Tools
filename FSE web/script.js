@@ -16,14 +16,16 @@ const categories = [
     expanded: true,
     calculators: [
       { id: 'merge-flow', label: 'Merging Flow', type: 'mergeflow', icon: '🔄' },
-      { id: 'BSmergeflow', label: 'BS 9999 Merge Flow', type: 'BSmergeflow', icon: '🔢' }
+      { id: 'BSmergeflow', label: 'BS 9999 Merge Flow', type: 'BSmergeflow', icon: '🔢' },
+      { id: 'flameheight', label: 'Flame Height', type: 'Flameheight', icon: '🔥' }
     ]
   },
   {
     id: 'b2',
     label: 'B2',
     expanded: false,
-    calculators: []
+    calculators: [
+    ]
   },
   {
     id: 'b3',
@@ -514,38 +516,74 @@ function renderWindows() {
   const workspace = document.getElementById('workspace');
   const workspaceRect = workspace.getBoundingClientRect();
   
-  // Get all minimized windows and calculate their positions
-  const minimizedWindows = state.windows.filter(w => w.minimized);
+  // Get all minimized windows (excluding figure and help windows) and calculate their positions
+  const minimizedWindows = state.windows.filter(w => 
+    w.minimized && 
+    !w.type.endsWith('-figure') && 
+    !w.type.endsWith('-help')
+  );
   const minimizedWindowPositions = {};
   const minimizedSpacing = 10; // Space between minimized windows
   const minimizedStartX = 20;
   const minimizedStartY = 20;
-  const minimizedWidth = 150; // Approximate width of minimized window
   const minimizedHeight = 36; // Approximate height of minimized window
-  const windowsPerRow = Math.floor((workspaceRect.width - minimizedStartX * 2) / (minimizedWidth + minimizedSpacing));
+  const leftPadding = 16; // Left padding
+  const rightPadding = 2; // Minimal right padding to prevent text cutoff
+  const minWidth = 100; // Minimum width for minimized windows
+  const maxWidth = 300; // Maximum width for minimized windows
   
-  minimizedWindows.forEach((window, index) => {
-    const row = Math.floor(index / windowsPerRow);
-    const col = index % windowsPerRow;
+  // Calculate dynamic widths for each minimized window based on title length
+  const minimizedWindowWidths = {};
+  minimizedWindows.forEach(window => {
+    // Calculate width based on title length
+    const titleLength = window.title ? window.title.length : 10;
+    // Base width: ~8.5px per character + padding (allows full text display)
+    const calculatedWidth = Math.max(minWidth, Math.min(maxWidth, titleLength * 8.5 + leftPadding + rightPadding));
+    minimizedWindowWidths[window.id] = calculatedWidth;
+  });
+  
+  // Calculate positions using dynamic widths
+  let currentX = minimizedStartX;
+  let currentY = minimizedStartY;
+  
+  minimizedWindows.forEach((window) => {
+    const windowWidth = minimizedWindowWidths[window.id];
+    
+    // Check if window fits on current row
+    if (currentX + windowWidth > workspaceRect.width - minimizedStartX) {
+      // Move to next row
+      currentX = minimizedStartX;
+      currentY += minimizedHeight + minimizedSpacing;
+    }
+    
     minimizedWindowPositions[window.id] = {
-      x: minimizedStartX + col * (minimizedWidth + minimizedSpacing),
-      y: minimizedStartY + row * (minimizedHeight + minimizedSpacing)
+      x: currentX,
+      y: currentY,
+      width: windowWidth
     };
+    
+    currentX += windowWidth + minimizedSpacing;
   });
   
   workspace.innerHTML = state.windows.map(window => {
-    if (window.minimized) {
-      const position = minimizedWindowPositions[window.id] || { x: minimizedStartX, y: minimizedStartY };
+    // Only show minimized windows that are not figure or help windows
+    if (window.minimized && !window.type.endsWith('-figure') && !window.type.endsWith('-help')) {
+      const position = minimizedWindowPositions[window.id] || { x: minimizedStartX, y: minimizedStartY, width: 150 };
       return `
         <div class="calculator-window-minimized" 
              style="z-index: ${window.zIndex}; 
                     left: ${position.x}px; 
-                    bottom: ${position.y}px;"
+                    bottom: ${position.y}px;
+                    width: ${position.width}px;"
              data-window-id="${window.id}"
              title="${window.title}">
           ${window.title}
         </div>
       `;
+    }
+    // Skip rendering minimized figure/help windows (they're hidden when minimized)
+    if (window.minimized) {
+      return '';
     }
     return `
       <div class="calculator-window ${window.maximized ? 'maximized' : ''}" 
