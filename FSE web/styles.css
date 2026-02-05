@@ -346,7 +346,7 @@ body {
 
 .calculator-window-minimized {
   position: absolute;
-  padding: 8px 16px;
+  padding: 8px 2px 8px 16px;
   background: var(--window-bg);
   border: 1px solid var(--window-border);
   border-radius: 4px;
@@ -356,9 +356,10 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.2s;
   white-space: nowrap;
-  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-sizing: border-box;
+  text-align: left;
 }
 
 .calculator-window-minimized:hover {
@@ -625,6 +626,47 @@ input[type="checkbox"]:disabled {
 .calc-input:focus {
   outline: none;
   border-color: var(--primary-color);
+}
+
+/* Dropdown styling */
+.calc-dropdown {
+  width: 150px;
+  height: auto;
+  padding: 12px !important;
+  padding-right: 35px !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: 4px !important;
+  background: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22%3E%3Cpath fill=%22%23888%22 d=%22M6 8L1 3h10z%22/%3E%3C/svg%3E') !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+}
+
+.calc-dropdown:focus {
+  outline: none;
+  border-color: var(--primary-color) !important;
+}
+
+.calc-dropdown option {
+  background: var(--input-bg);
+  color: var(--text-primary);
+  padding: 10px;
+}
+
+/* Dark mode dropdown fixes */
+.theme-dark .calc-dropdown {
+  color-scheme: dark;
+}
+
+.theme-dark .calc-dropdown option {
+  background: var(--dark-input-bg, #2d2d2d);
+  color: var(--dark-text-primary, #e0e0e0);
 }
 
 /* Ensure inputs are clickable and not blocked */
