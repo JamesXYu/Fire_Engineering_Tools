@@ -1,64 +1,191 @@
-/*
+// PD 7974-1:2019 Equation Functions
+
+// Equation 10: Virtual fire origin
+function eq_10_virtual_origin(D, Q_dot_kW) {
+  return -1.02 * D + 0.083 * Math.pow(Q_dot_kW, 2 / 5);
+}
+
+// Equation 14: Plume temperature (mean centre-line excess gas temperature)
+function eq_14_plume_temperature(T_0, g, c_p_0_kJ_kg_K, rho_0, Q_dot_c_kW, z, z_0) {
+  const aa = Math.pow(T_0 / (g * Math.pow(c_p_0_kJ_kg_K, 2) * Math.pow(rho_0, 2)), 1 / 3);
+  const bb = Math.pow(Q_dot_c_kW, 2 / 3);
+  const cc = Math.pow(z - z_0, -5 / 3);
+  return 9.1 * aa * bb * cc;
+}
+
+// Equation 15: Plume velocity (mean gas velocity along fire centre-line)
+function eq_15_plume_velocity(T_0, g, c_p_0_kJ_kg_K, rho_0, Q_dot_c_kW, z, z_0) {
+  const aa = Math.pow(g / (c_p_0_kJ_kg_K * rho_0 * T_0), 1 / 3);
+  const bb = Math.pow(Q_dot_c_kW, 1 / 3);
+  const cc = Math.pow(z - z_0, -1 / 3);
+  return 3.4 * aa * bb * cc;
+}
+
+// Equation 26: Axisymmetric ceiling jet temperature
+function eq_26_axisymmetric_ceiling_jet_temperature(Q_dot_c_kW, z_H, z_0, r) {
+  const aa = 6.721;
+  const bb = Math.pow(Q_dot_c_kW, 2 / 3) / Math.pow(z_H - z_0, 5 / 3);
+  const cc = Math.pow(r / (z_H - z_0), -0.6545);
+  return aa * bb * cc;
+}
+
+// Equation 27: Axisymmetric ceiling jet velocity
+function eq_27_axisymmetric_ceiling_jet_velocity(Q_dot_c_kW, z_H, z_0, r) {
+  const aa = 0.2526;
+  const bb = Math.pow(Q_dot_c_kW, 1 / 3) / Math.pow(z_H - z_0, 1 / 3);
+  const cc = Math.pow(r / (z_H - z_0), -1.0739);
+  return aa * bb * cc;
+}
+
+// Equation 55: Activation of heat detector device
+function eq_55_activation_of_heat_detector_device(u, RTI, Delta_T_g, Delta_T_e, C) {
+  const aa = Math.pow(u, 0.5) / RTI;
+  const bb = Delta_T_g - Delta_T_e * (1 + C / Math.pow(u, 0.5));
+  return aa * bb;
+}
+
+// Main PD 7974 Detector Calculation Function
 function runPD7974DetectorCalculation(inputs) {
   const {
-    t_end = 600,    // s
-    dt = 1,          // s
-    alpha,          // kW/s^2
-    H,              // m (ceiling height)
-    R,              // m (radial distance)
-    RTI,            // m^1/2 s^1/2
-    C,              // m^1/2 s^-1/2
-    HRR_density,    // kW/m^2
-    Ccov,           // Convection HRR (%)
-    T_act,          // °C
-
+    t_end = 600,                    // s
+    dt = 1,                          // s
+    alpha,                           // kW/s^2 (fire growth factor)
+    H,                               // m (detector to fire vertical distance / ceiling height)
+    R,                               // m (detector to fire horizontal distance / radial distance)
+    RTI,                             // (m s)^0.5 (response time index)
+    C,                               // (m/s)^0.5 (conduction factor)
+    HRR_density,                     // kW/m^2 (fire HRR density)
+    Ccov = 0,                        // Convection HRR (% - converted to fraction)
+    T_act,                           // °C (activation temperature)
+    ambient_gravity_acceleration = 9.81,      // m/s^2
+    ambient_gas_temperature = 293.15,         // K
+    ambient_gas_specific_heat = 1.2,          // kJ/kg/K
+    ambient_gas_density = 1.0                  // kg/m^3
   } = inputs;
 
-    // -----------------------------
-    // Fire growth (t-squared fire)
-    // -----------------------------
-    const Q = alpha * t * t; // kW
-    const Qc = Ccov * Q;
+  // Convert convection HRR from percentage to fraction
+  const fire_conv_frac = Ccov / 100.0;
 
-    // -----------------------------
-    // Virtual origin (simplified)
-    // -----------------------------
-    const z0 = 0.083 * Math.pow(Q, 2 / 5);
+  // Initialize detector temperature at ambient
+  let detector_temperature = ambient_gas_temperature;
+  let regime = "Plume";
 
-    // -----------------------------
-    // Decide Jet or Plume
-    // HRR density only affects regime
-    // -----------------------------
-    const plumecheck = R / (H - z0);
-    let ΔTg, u;
+  // Generate time array
+  const timeSteps = [];
+  for (let t = 0; t <= t_end; t += dt) {
+    timeSteps.push(t);
+  }
 
-    if (plumecheck < 0.134) {
-      const z = H - z0;
-      ΔTg = 25 * Math.pow(Qc, 2 / 3) * Math.pow(z, -5 / 3);
-      u = 1.03 * Math.pow(Qc, 1 / 3) * Math.pow(z, -1 / 3);
-      regime = "Jet";
-    } else if (plumecheck > 0.134 && plumecheck < 0.246) {
-      const z = H - z0;
-      const rRatio = R / z;
-      ΔTg = 6.72 * Math.pow(Qc, 2 / 3) * Math.pow(z, -5 / 3) * Math.pow(rRatio, -0.6545);
-      u = 1.03 * Math.pow(Qc, 1 / 3) * Math.pow(z, -1 / 3);
+  // Main calculation loop
+  for (let i = 0; i < timeSteps.length; i++) {
+    const t = timeSteps[i];
+
+    // Calculate fire HRR using t-squared fire growth (Equation 22)
+    // Note: Python uses kW/m^2 for alpha, but converts to kW, so alpha here should be in kW/s^2
+    const Q_dot_kW = alpha * Math.pow(t, 2); // kW
+
+    // Calculate convective heat release rate
+    const Q_dot_c_kW = Q_dot_kW * fire_conv_frac;
+
+    // Calculate fire diameter
+    const D = Math.sqrt((Q_dot_kW / HRR_density) / Math.PI) * 2;
+
+    // Calculate virtual fire origin (Equation 10)
+    const z_0 = eq_10_virtual_origin(D, Q_dot_kW);
+
+    // Decide whether to use plume or jet
+    // air_type = 1 for plume, air_type = 2 for jet
+    const r_over_z_minus_z0 = R / (H - z_0);
+    let air_type;
+    
+    if (r_over_z_minus_z0 > 0.134 && r_over_z_minus_z0 > 0.246) {
+      air_type = 2; // jet
       regime = "Jet";
     } else {
-      const z = H - z0;
-      const rRatio = R / z;
-      ΔTg = 6.72 * Math.pow(Qc, 2 / 3) * Math.pow(z, -5 / 3) * Math.pow(rRatio, -0.6545);
-      u = 0.2526 * Math.pow(Q / z, 1 / 3) * Math.pow(rRatio, -1.0739);
-      regime = "Jet";
+      air_type = 1; // plume
+      regime = "Plume";
     }
-    const du = Math.sqrt(u);
 
-    const dΔTe_dt =
-      (du / RTI) *
-      (ΔTg - (1 + C / du) * ΔTe);
+    // Calculate ceiling jet temperature and velocity
+    let theta_jet_rise, u_jet;
 
-    ΔTe += dΔTe_dt * dt;
+    if (air_type === 1) {
+      // Plume correlations
+      theta_jet_rise = eq_14_plume_temperature(
+        ambient_gas_temperature,
+        ambient_gravity_acceleration,
+        ambient_gas_specific_heat,
+        ambient_gas_density,
+        Q_dot_c_kW,
+        H,
+        z_0
+      );
+      u_jet = eq_15_plume_velocity(
+        ambient_gas_temperature,
+        ambient_gravity_acceleration,
+        ambient_gas_specific_heat,
+        ambient_gas_density,
+        Q_dot_c_kW,
+        H,
+        z_0
+      );
+    } else if (air_type === 2) {
+      // Ceiling jet correlations
+      theta_jet_rise = eq_26_axisymmetric_ceiling_jet_temperature(
+        Q_dot_c_kW,
+        H,
+        z_0,
+        R
+      );
+      u_jet = eq_27_axisymmetric_ceiling_jet_velocity(
+        Q_dot_c_kW,
+        H,
+        z_0,
+        R
+      );
+    }
 
-*/
+    // Calculate absolute jet temperature
+    const theta_jet = theta_jet_rise + ambient_gas_temperature;
+
+    // Calculate detector temperature (Equation 55)
+    if (i > 0) {
+      const Delta_T_g = theta_jet - ambient_gas_temperature;
+      const Delta_T_e = detector_temperature - ambient_gas_temperature;
+      
+      const d_Delta_Te_dt = eq_55_activation_of_heat_detector_device(
+        u_jet,
+        RTI,
+        Delta_T_g,
+        Delta_T_e,
+        C
+      );
+      
+      const d_Delta_Te = d_Delta_Te_dt * dt;
+      detector_temperature = d_Delta_Te + detector_temperature;
+    }
+
+    // Check for activation
+    // Convert activation temperature from °C to K for comparison
+    const T_act_K = T_act + 273.15;
+    if (detector_temperature >= T_act_K) {
+      return {
+        activationTime: t,
+        regime: regime,
+        detectorTemperature: detector_temperature - 273.15, // Convert back to °C
+        jetTemperature: theta_jet - 273.15, // Convert back to °C
+        jetVelocity: u_jet
+      };
+    }
+  }
+
+  // No activation within simulation time
+  return {
+    activationTime: null,
+    regime: regime,
+    message: "Detector did not activate within simulation time"
+  };
+}
 
 const DetectorActivationCalculator = {
   // Required: Unique identifier for this calculator
@@ -141,8 +268,8 @@ const DetectorActivationCalculator = {
             <input type="number" class="calc-input" id="input8-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Convention HRR (%)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <label class="calc-label">Convection HRR (%)</label>
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="-" min="0" max="100" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">HRR density (kW/m²)</label>
@@ -256,8 +383,8 @@ const DetectorActivationCalculator = {
     const Ccov = parseFloat(input9El.value);
     const HRR_density = parseFloat(input10El.value);
 
-    // Check if required inputs are provided (Ccov - Convection HRR % is used in calculation)
-    if (isNaN(alpha) || isNaN(H) || isNaN(R) || isNaN(RTI) || isNaN(C) || isNaN(T_act) || isNaN(HRR_density)) {
+    // Check if required inputs are provided
+    if (isNaN(alpha) || isNaN(H) || isNaN(R) || isNaN(RTI) || isNaN(C) || isNaN(T_act) || isNaN(HRR_density) || isNaN(Ccov)) {
       result1El.value = '';
       result1El.placeholder = '—';
       result2El.value = '';
@@ -287,10 +414,7 @@ const DetectorActivationCalculator = {
       Ccov: Ccov || 0,
       T_act: T_act
     };
-const u =
-    0.2526 *
-    Math.pow(Q / z, 1 / 3) *
-    Math.pow(rRatio, -1.0739);
+    
     const result = runPD7974DetectorCalculation(calculationInputs);
 
     // Update output fields

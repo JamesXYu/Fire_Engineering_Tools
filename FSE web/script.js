@@ -183,9 +183,9 @@ function getMinimumSize(windowType) {
     const baseType = windowType.replace('-help', '');
     const calculator = CalculatorRegistry.get(baseType);
     if (calculator) {
-      return { width: 500, height: 600 }; // Help windows have fixed size
+      return { width: 400, height: 600 }; // Help windows have fixed size
     }
-    return { width: 500, height: 600 };
+    return { width: 400, height: 600 };
   }
   
   // Get calculator from registry
@@ -199,7 +199,7 @@ function getMinimumSize(windowType) {
 }
 
 // Window Management
-function openWindow(type, title) {
+function openWindow(type, title, sizeOverride) {
   const id = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const defaultSize = { width: 400, height: 500 };
   
@@ -229,8 +229,11 @@ function openWindow(type, title) {
   let y = 100 + state.windows.length * 30;
   // Use minimum width for mergeflow, default for others
   let width = (type === 'mergeflow') ? minSizes.width : defaultSize.width;
-  // Use minimum height as the initial height
-  let height = minSizes.height;
+  // Use minimum height as the initial height (or sizeOverride for help windows)
+  let height = sizeOverride && sizeOverride.height !== undefined ? sizeOverride.height : minSizes.height;
+  if (sizeOverride && sizeOverride.width !== undefined) {
+    width = sizeOverride.width;
+  }
 
   try {
     const saved = localStorage.getItem(`calculator-${type}-state`);
@@ -249,9 +252,11 @@ function openWindow(type, title) {
     // Ignore
   }
   
-  // Ensure window is at least minimum size
-  width = Math.max(width, minSizes.width);
-  height = Math.max(height, minSizes.height);
+  // Ensure window is at least minimum size (skip for sizeOverride, e.g. help window matching calculator height)
+  if (!sizeOverride) {
+    width = Math.max(width, minSizes.width);
+    height = Math.max(height, minSizes.height);
+  }
   
   // Adjust window size to fit within viewport if needed
   const adjustedSize = adjustWindowSizeForViewport(type, minSizes, height);
@@ -596,7 +601,7 @@ function renderWindows() {
            data-window-id="${window.id}">
         <div class="window-title-bar" data-window-id="${window.id}">
           <div style="display: flex; align-items: center; gap: 8px;">
-            ${window.type.endsWith('-help') || window.type.endsWith('-figure') ? '' : `<button class="figure-btn" data-window-id="${window.id}" title="Show Figure">🖼️</button>`}
+            ${window.type.endsWith('-help') || window.type.endsWith('-figure') ? '' : `<button class="figure-btn" data-window-id="${window.id}" title="Show Figure">📍</button>`}
             <span class="window-title">${window.title}</span>
           </div>
           <div class="window-controls">
@@ -1083,7 +1088,8 @@ function openHelpWindow(sourceWindowId) {
   } else if (calculator.name) {
     helpTitle = `${calculator.name} - Help`;
   }
-  const helpWindowId = openWindow(helpType, helpTitle);
+  // Match help window height to the source calculator window
+  const helpWindowId = openWindow(helpType, helpTitle, { height: sourceWindow.height });
   
   // Position help window next to source window
   setTimeout(() => {
