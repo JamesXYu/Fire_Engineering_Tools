@@ -13,7 +13,7 @@ const categories = [
   {
     id: 'b1',
     label: 'B1',
-    expanded: true,
+    expanded: false,
     calculators: [
       { id: 'merge-flow', label: 'Merging Flow', type: 'mergeflow', icon: '🔄' },
       { id: 'BSmergeflow', label: 'BS 9999 Merge Flow', type: 'BSmergeflow', icon: '🔢' },
@@ -41,7 +41,7 @@ const categories = [
     label: 'B4',
     expanded: false,
     calculators: [
-      { id: 'externalfirespread', label: 'External Fire Spread ', type: 'Externalfirespread', icon: '🔢' }
+      { id: 'externalfirespread', label: 'External Fire Spread ', type: 'Externalfirespread', icon: '🧱' }
     ]
   },
   {
