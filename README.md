@@ -17,31 +17,6 @@ A web-based desktop application for fire safety engineering calculations. The ap
 3. Click a calculator to open it in a new window
 4. Enter inputs; results update automatically
 
-## Project Structure
-
-```
-FSE web/
-├── index.html          # Main application entry
-├── script.js           # App logic, window management, event handling
-├── styles.css          # Theming and layout
-├── calculators/        # Calculator modules
-│   ├── registry.js     # Calculator registration
-│   ├── TEMPLATE.js     # Template for new calculators
-│   ├── mergeflow.js
-│   ├── BSmergeflow.js
-│   ├── flameheight.js
-│   ├── DetectorActivation.js
-│   ├── TravellingFire.js
-│   ├── FirePlume.js
-│   └── Externalfirespread.js
-└── external lib/       # Reference Python implementations
-    ├── fse_activation_hd.py
-    ├── fse_plume.py
-    ├── fse_travelling_fire.py
-    ├── fse_travelling_fire_flux.py
-    └── pd_7974_1_2019.py
-```
-
 ## Calculators
 
 ### ADB Merging Flow
