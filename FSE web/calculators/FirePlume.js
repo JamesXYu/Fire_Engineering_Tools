@@ -53,7 +53,7 @@ const FirePlumeCalculator = {
     const inputCount = 4, outputCount = 3, totalFieldCount = inputCount + outputCount;
     const minHeight = titleBarHeight + windowContentPadding +
       inputCount * inputSectionHeight + outputCount * outputSectionHeight +
-      (totalFieldCount + 1) * formGap + dividerHeight + actionsHeight + 5;
+      (totalFieldCount + 1) * formGap + dividerHeight + actionsHeight + 15;
     return { width: 400, height: minHeight };
   },
 

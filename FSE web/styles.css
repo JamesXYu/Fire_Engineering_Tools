@@ -763,6 +763,63 @@ input[type="checkbox"]:disabled {
   font-style: italic;
 }
 
+/* Time-series calculator: chart + table */
+.calc-timeseries-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.calc-chart-container {
+  height: 200px;
+  min-height: 150px;
+  position: relative;
+  width: 100%;
+}
+
+.calc-timeseries-table-wrapper {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--input-bg);
+}
+
+.calc-timeseries-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.calc-timeseries-table th,
+.calc-timeseries-table td {
+  padding: 6px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--window-border);
+}
+
+.calc-timeseries-table th {
+  background: var(--title-bar-bg);
+  color: var(--text-primary);
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+}
+
+.calc-timeseries-table td {
+  color: var(--text-secondary);
+}
+
+.calc-timeseries-table tbody tr:hover {
+  background: var(--button-hover);
+}
+
+.calc-select {
+  cursor: pointer;
+  appearance: auto;
+}
+
 /* Math formula styling - LaTeX-like block math */
 .math-formula {
   display: block;

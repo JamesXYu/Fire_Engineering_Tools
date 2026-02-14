@@ -225,7 +225,7 @@ const DetectorActivationCalculator = {
     const outputSectionsHeight = outputCount * outputSectionHeight;
     const totalSectionsHeight = inputSectionsHeight + outputSectionsHeight;
     const gapsHeight = (totalFieldCount + 1) * formGap;
-    const minHeight = titleBarHeight + windowContentPadding + totalSectionsHeight + gapsHeight + dividerHeight + actionsHeight + 5;
+    const minHeight = titleBarHeight + windowContentPadding + totalSectionsHeight + gapsHeight + dividerHeight + actionsHeight + 40;
 
     return { width: 400, height: minHeight };
   },

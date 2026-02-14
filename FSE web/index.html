@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="app theme-dark" id="app">
@@ -38,6 +39,12 @@
   <script src="calculators/DetectorActivation.js"></script>
   <script src="calculators/TravellingFire.js"></script>
   <script src="calculators/FirePlume.js"></script>
+  <script src="calculators/ParametricFire.js"></script>
+  <script src="calculators/SteelHeatTransfer.js"></script>
+  <script src="calculators/ExternalSteel.js"></script>
+  <script src="calculators/StrengthReductionFactor.js"></script>
+  <script src="calculators/StefanBoltzmann.js"></script>
+  <script src="calculators/FireGrowthRate.js"></script>
   <!-- Main Application -->
   <script src="script.js"></script>
   <!-- Initialize Calculators -->
@@ -50,6 +57,12 @@
     CalculatorRegistry.register(DetectorActivationCalculator);
     CalculatorRegistry.register(TravellingFireCalculator);
     CalculatorRegistry.register(FirePlumeCalculator);
+    CalculatorRegistry.register(ParametricFireCalculator);
+    CalculatorRegistry.register(SteelHeatTransferCalculator);
+    CalculatorRegistry.register(ExternalSteelCalculator);
+    CalculatorRegistry.register(StrengthReductionFactorCalculator);
+    CalculatorRegistry.register(StefanBoltzmannCalculator);
+    CalculatorRegistry.register(FireGrowthRateCalculator);
   </script>
 </body>
 </html>

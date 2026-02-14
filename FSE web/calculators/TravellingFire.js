@@ -162,8 +162,8 @@ const TravellingFireCalculator = {
     const inputCount = 10, outputCount = 1, totalFieldCount = inputCount + outputCount;
     const minHeight = titleBarHeight + windowContentPadding + methodButtonGroupHeight +
       inputCount * inputSectionHeight + outputCount * outputSectionHeight +
-      (totalFieldCount + 1) * formGap + dividerHeight + actionsHeight + 5;
-    return { width: 400, height: minHeight };
+      (totalFieldCount + 1) * formGap + dividerHeight + actionsHeight + 75;
+    return { width: 400, height: minHeight};
   },
 
   getHTML(windowId) {

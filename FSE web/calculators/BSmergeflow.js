@@ -116,7 +116,7 @@ const BS9999MergeFlowCalculator = {
     const gapsHeight = (totalFieldCount + 1) * formGap;
     const minHeight = titleBarHeight + windowContentPadding + methodButtonGroupHeight + totalSectionsHeight + gapsHeight + dividerHeight + actionsHeight + 130;
     
-    return { width: 400, height: minHeight };
+    return { width: 400, height: minHeight + 15};
   },
   
   // Required: Get calculator HTML

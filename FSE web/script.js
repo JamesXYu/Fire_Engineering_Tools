@@ -12,43 +12,43 @@ const state = {
 const categories = [
   {
     id: 'b1',
-    label: 'B1',
+    label: 'Means of Escape',
     expanded: false,
     calculators: [
-      { id: 'merge-flow', label: 'Merging Flow', type: 'mergeflow', icon: '🔄' },
-      { id: 'BSmergeflow', label: 'BS 9999 Merge Flow', type: 'BSmergeflow', icon: '🔢' },
-      { id: 'flameheight', label: 'Flame Height', type: 'Flameheight', icon: '🔥' },
+      { id: 'merge-flow', label: 'Merging Flow', type: 'mergeflow', icon: '💨' },
+      { id: 'BSmergeflow', label: 'BS 9999 Merge Flow', type: 'BSmergeflow', icon: '🚪' },
+      { id: 'flameheight', label: 'Flame Height', type: 'Flameheight', icon: '📏' },
       { id: 'detector-activation', label: 'Detector Activation', type: 'DetectorActivation', icon: '🔔' },
-      { id: 'travelling-fire', label: 'Travelling Fire', type: 'TravellingFire', icon: '🚂' },
       { id: 'fire-plume', label: 'Fire Plume', type: 'FirePlume', icon: '🌪️' },
     ]
   },
   {
-    id: 'b2',
-    label: 'B2',
-    expanded: false,
-    calculators: [
-    ]
-  },
-  {
     id: 'b3',
-    label: 'B3',
-    expanded: false,
-    calculators: []
-  },
-  {
-    id: 'b4',
-    label: 'B4',
+    label: 'Internal Fire Spread',
     expanded: false,
     calculators: [
-      { id: 'externalfirespread', label: 'External Fire Spread ', type: 'Externalfirespread', icon: '🧱' }
+      { id: 'parametric-fire', label: 'Parametric Fire', type: 'ParametricFire', icon: '📐' },
+      { id: 'steel-heat-transfer', label: 'Steel Heat Transfer', type: 'SteelHeatTransfer', icon: '⛓️' },
+      { id: 'external-steel', label: 'External Steel', type: 'ExternalSteel', icon: '🏗️' },
+      { id: 'strength-reduction', label: 'Strength Reduction', type: 'StrengthReductionFactor', icon: '📉' },]
+    },
+    {
+      id: 'b4',
+      label: 'External Fire Spread',
+      expanded: false,
+      calculators: [
+        { id: 'externalfirespread', label: 'External Fire Spread ', type: 'Externalfirespread', icon: '🧱' }
+      ]
+    },
+    {
+      id: 'b5',
+      label: 'Thermal Fundamentals',
+      expanded: false,
+      calculators: [
+      { id: 'travelling-fire', label: 'Travelling Fire', type: 'TravellingFire', icon: '🚂' },
+      { id: 'stefan-boltzmann', label: 'Stefan-Boltzmann Law', type: 'StefanBoltzmann', icon: '🌡️' },
+      { id: 'fire-growth-rate', label: 'Fire Growth Rate', type: 'FireGrowthRate', icon: '📈' },
     ]
-  },
-  {
-    id: 'b5',
-    label: 'B5',
-    expanded: false,
-    calculators: []
   },
 ];
 
@@ -643,6 +643,19 @@ function renderWindows() {
       }
     }
   });
+
+  // Update help window content for time-series calculators (chart + table)
+  setTimeout(() => {
+    state.windows.forEach(window => {
+      if (window.minimized) return;
+      if (!window.type.endsWith('-help') || !window.sourceWindowId) return;
+      const baseType = window.type.replace('-help', '');
+      const calculator = CalculatorRegistry.get(baseType);
+      if (calculator && calculator.hasTimeSeries && calculator.updateHelpContent) {
+        calculator.updateHelpContent(window.id, window.sourceWindowId);
+      }
+    });
+  }, 0);
 }
 
 function attachWindowEvents() {
@@ -1087,11 +1100,22 @@ function openHelpWindow(sourceWindowId) {
     } else {
       helpTitle = 'Justification';
     }
+  } else if (sourceWindow.type === 'ParametricFire') {
+    helpTitle = 'Parametric Fire - Detail';
+  } else if (sourceWindow.type === 'SteelHeatTransfer') {
+    helpTitle = 'Steel Heat Transfer - Detail';
+  } else if (sourceWindow.type === 'FireGrowthRate') {
+    helpTitle = 'Fire Growth Rate - Detail';
+  } else if (sourceWindow.type === 'StefanBoltzmann') {
+    helpTitle = 'Stefan-Boltzmann Law - Detail';
   } else if (calculator.name) {
     helpTitle = `${calculator.name} - Help`;
   }
-  // Match help window height to the source calculator window
-  const helpWindowId = openWindow(helpType, helpTitle, { height: sourceWindow.height });
+  // Match help window height to source; use larger min for time-series (chart + table), except Fire Growth Rate
+  const helpHeight = (sourceWindow.type === 'FireGrowthRate')
+    ? sourceWindow.height
+    : (calculator.hasTimeSeries ? Math.max(sourceWindow.height, 600) : sourceWindow.height);
+  const helpWindowId = openWindow(helpType, helpTitle, { height: helpHeight });
   
   // Position help window next to source window
   setTimeout(() => {
@@ -1244,6 +1268,9 @@ function exportCalculatorData(windowId, calculator, window) {
       method: method,
       inputValues: inputValues
     };
+    if (calculator.hasTimeSeries && calculator._lastTimeSeriesByWindow && calculator._lastTimeSeriesByWindow[windowId]) {
+      exportData.timeSeries = calculator._lastTimeSeriesByWindow[windowId];
+    }
     
     // Convert to JSON
     const jsonString = JSON.stringify(exportData, null, 2);
