@@ -18,7 +18,9 @@ const categories = [
       { id: 'merge-flow', label: 'Merging Flow', type: 'mergeflow', icon: '🔄' },
       { id: 'BSmergeflow', label: 'BS 9999 Merge Flow', type: 'BSmergeflow', icon: '🔢' },
       { id: 'flameheight', label: 'Flame Height', type: 'Flameheight', icon: '🔥' },
-      { id: 'detector-activation', label: 'Detector Activation', type: 'DetectorActivation', icon: '🔔' }
+      { id: 'detector-activation', label: 'Detector Activation', type: 'DetectorActivation', icon: '🔔' },
+      { id: 'travelling-fire', label: 'Travelling Fire', type: 'TravellingFire', icon: '🚂' },
+      { id: 'fire-plume', label: 'Fire Plume', type: 'FirePlume', icon: '🌪️' },
     ]
   },
   {
