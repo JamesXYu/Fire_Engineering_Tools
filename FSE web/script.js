@@ -368,9 +368,9 @@ function updateWindowSize(id, width, height) {
     let newWidth = Math.max(width, minSizes.width);
     let newHeight = Math.max(height, minSizes.height);
     
-    // Adjust size to fit within viewport if needed
+    // Adjust height to fit within viewport if needed; preserve width (adjustWindowSizeForViewport
+    // always returns minSize.width for width, which would block width resizing)
     const adjustedSize = adjustWindowSizeForViewport(window.type, minSizes, newHeight);
-    newWidth = adjustedSize.width;
     newHeight = adjustedSize.height;
     
     window.width = newWidth;
