@@ -126,6 +126,8 @@ function updateTheme() {
   app.className = `app theme-${state.theme}`;
   const themeToggle = document.getElementById('themeToggle');
   themeToggle.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+  // Re-render windows so figure images switch between light/dark versions
+  if (typeof renderWindows === 'function') renderWindows();
 }
 
 // Get available viewport dimensions (workspace area)
@@ -175,9 +177,9 @@ function adjustWindowSizeForViewport(windowType, minSize, requestedHeight) {
 
 // Get minimum window size based on calculator type
 function getMinimumSize(windowType) {
-  // Figure windows have fixed size (non-resizable)
+  // Figure windows size to image; use small min for edge cases
   if (windowType.endsWith('-figure')) {
-    return { width: 600, height: 500 };
+    return { width: 250, height: 250 };
   }
   
   // Check if it's a help window
@@ -905,7 +907,11 @@ function getCalculatorContent(type, windowId) {
   // Check if it's a figure window
   if (type.endsWith('-figure')) {
     const figureWindow = state.windows.find(w => w.id === windowId);
-    const imagePath = figureWindow ? figureWindow.figureImagePath : `Figures/${type.replace('-figure', '')}.png.png`;
+    let imagePath = figureWindow ? figureWindow.figureImagePath : `Figures/${type.replace('-figure', '')}.png.png`;
+    // Use -modified figures for dark mode (black versions)
+    if (state.theme === 'dark') {
+      imagePath = imagePath.replace('.png.png', '.png-modified.png');
+    }
     return `
       <div style="padding: 20px; display: flex; justify-content: center; align-items: center; height: 100%; overflow: auto;">
         <img src="${imagePath}" alt="Figure" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=\\'color: var(--text-secondary); text-align: center;\\'>Figure image not found: ${imagePath}</p>'">
@@ -934,6 +940,14 @@ function getCalculatorContent(type, windowId) {
   }
   
   return '';
+}
+
+// Get display path for figure (applies dark mode -modified suffix)
+function getFigureDisplayPath(basePath) {
+  if (state.theme === 'dark') {
+    return basePath.replace('.png.png', '.png-modified.png');
+  }
+  return basePath;
 }
 
 // Open figure window
@@ -997,8 +1011,39 @@ function openFigureWindow(sourceWindowId) {
     figureTitle = `Method ${methodLetter} (${activeMethod}) - Figure`;
   }
   
-  // Create figure window with fixed size
-  const figureSize = { width: 600, height: 500 };
+  // Load image to get dimensions, then create window
+  const displayPath = getFigureDisplayPath(figureImagePath);
+  const img = new Image();
+  img.onload = function() {
+    const viewport = getAvailableViewportSize();
+    const titleBarHeight = 40;
+    const padding = 40; // 20px each side
+    const minWidth = 300;
+    const minHeight = 250;
+    const maxWidth = Math.floor(viewport.width * 0.9);
+    const maxHeight = Math.floor(viewport.height * 0.9) - 20;
+    
+    let width = Math.min(img.naturalWidth + padding, maxWidth);
+    let height = Math.min(img.naturalHeight + titleBarHeight + padding, maxHeight);
+    width = Math.max(width, minWidth);
+    height = Math.max(height, minHeight);
+    
+    createFigureWindow(sourceWindowId, figureType, figureImagePath, figureTitle, { width, height });
+  };
+  img.onerror = function() {
+    createFigureWindow(sourceWindowId, figureType, figureImagePath, figureTitle, { width: 600, height: 500 });
+  };
+  img.src = displayPath;
+}
+
+function createFigureWindow(sourceWindowId, figureType, figureImagePath, figureTitle, figureSize) {
+  const sourceWindow = state.windows.find(w => w.id === sourceWindowId);
+  if (!sourceWindow) return;
+  // Avoid duplicate if user clicked figure button again before image loaded
+  const existing = state.windows.find(w => w.sourceWindowId === sourceWindowId && w.type === figureType);
+  if (existing) return;
+  
+  const calculator = CalculatorRegistry.get(sourceWindow.type);
   const id = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
   const figureWindow = {

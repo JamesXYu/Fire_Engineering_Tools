@@ -16,11 +16,11 @@
   --light-button-hover: #e8e8e8;
   --light-primary-color: #00a19b;
   
-  /* Dark theme (VS Code-like) */
+  /* Dark theme (black window for figures, grey elsewhere) */
   --dark-bg: #1e1e1e;
   --dark-sidebar-bg: #252526;
-  --dark-window-bg: #2d2d30;
-  --dark-title-bar-bg: #3e3e42;
+  --dark-window-bg: #000000;
+  --dark-title-bar-bg: #2d2d30;
   --dark-text-primary: #cccccc;
   --dark-text-secondary: #858585;
   --dark-border: #3e3e42;
