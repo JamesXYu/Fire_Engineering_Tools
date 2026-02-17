@@ -393,20 +393,16 @@ const ParametricFireCalculator = {
     const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'BSEN';
     const isBSEN = method === 'BSEN';
     const refText = isBSEN
-      ? 'BS EN 1991-1-2 Appendix A – Parametric temperature-time curves (Eurocode 1).'
-      : 'DIN EN 1991-1-2/NA:2010-12 Appendix AA – Simplified natural fire model (German Annex).';
-    const limitsHtml = isBSEN
-      ? '<li>q_td typically 50–1000 MJ/m²</li>'
-      : '<li>Fire load: 100–1300 MJ/m²</li><li>Floor area: max 400 m²</li><li>Ceiling height: max 5 m</li><li>Vent opening / floor area: 12.5–50%</li>';
-    const inputsHtml = isBSEN
-      ? '<li><strong>A<sub>v</sub>, h<sub>eq</sub>:</strong> Opening area and height</li><li><strong>q<sub>fd</sub>:</strong> Fire load density (MJ/m²)</li><li><strong>λ, ρ, c:</strong> Lining thermal conductivity, density, specific heat</li>'
-      : '<li><strong>A<sub>w</sub>, h<sub>w</sub>:</strong> Window area and height</li><li><strong>t<sub>α</sub>:</strong> Fire growth factor</li><li><strong>b:</strong> Heat storage capacity (Table AA.1)</li><li><strong>q<sub>x,d</sub>:</strong> Design fire load density (MJ/m²)</li>';
+      ? 'BS EN 1991-1-2 Appendix A — Parametric temperature-time curves (Eurocode 1).'
+      : 'DIN EN 1991-1-2/NA Appendix AA — Simplified natural fire model (German Annex).';
     return `
-      <div class="form-calculator help-detail" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 16px; color: var(--text-primary);">Parametric Fire – Detail (${method})</h3>
+      <div class="form-calculator help-detail" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          ${refText} Compartment gas temperature vs time.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Results</h4>
         <div class="help-results-section" data-source-window="${sourceWindowId || ''}">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Results</h4>
-          <div class="calc-chart-container" style="margin-bottom: 12px;">
+          <div class="calc-chart-container" style="margin: 4px 0 8px 0;">
             <canvas id="help-chart-${windowId}"></canvas>
           </div>
           <div class="calc-timeseries-table-wrapper">
@@ -416,14 +412,14 @@ const ParametricFireCalculator = {
             </table>
           </div>
         </div>
-        <div class="help-formula-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--window-border);">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Reference</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">${refText}</p>
-          <h5 style="color: var(--text-primary); margin: 12px 0 6px;">Limitations</h5>
-          <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 20px; margin-bottom: 12px;">${limitsHtml}</ul>
-          <h5 style="color: var(--text-primary); margin: 12px 0 6px;">Inputs</h5>
-          <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">${inputsHtml}</ul>
-        </div>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          ${isBSEN ? 'Total/floor area, opening area and height, fire load density, lining properties (λ, ρ, c), heat storage group.' : 'Window area and height, fire growth factor, heat storage (b), design fire load density.'}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Limitations</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          ${isBSEN ? 'q_td typically 50–1000 MJ/m².' : 'Fire load 100–1300 MJ/m², floor area max 400 m², ceiling height max 5 m.'}
+        </p>
       </div>
     `;
   },

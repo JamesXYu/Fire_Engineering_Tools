@@ -315,40 +315,24 @@ const DetectorActivationCalculator = {
   },
 
   // Required: Get help window HTML
-  getHelpHTML(windowId) {
+  getHelpHTML(windowId, sourceWindowId) {
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 20px; color: var(--text-primary);">Detector Activation Help</h3>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">How to Use</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            Enter your values in the 10 input fields and the calculator will compute the results.
-          </p>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Description</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            This calculator implements PD 7974 detector activation calculations using t-squared fire growth model.
-            It determines whether the detector operates in Plume or Jet regime and calculates the activation time.
-          </p>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Outputs</h4>
-          <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">
-            <li><strong>Activation Time:</strong> Time in seconds when detector activates (or "No activation" if it doesn't activate within simulation time)</li>
-            <li><strong>Jet or Plume:</strong> The regime determined by the calculation (Plume or Jet)</li>
-          </ul>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">References</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            PD 7974 Clause 8.9 - Detector ODE calculations
-          </p>
-        </div>
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          PD 7974-1:2019 — Heat detector activation time using t-squared fire growth. Determines Plume or Jet regime and activation time.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Inputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          Simulation time, time step, fire growth factor (α), ceiling height, detector height, RTI, activation temperature, fire diameter/HRR density, ambient temperature.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Regime</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          The calculator checks whether the detector is in the <strong>Plume</strong> (fire plume) or <strong>Jet</strong> (ceiling jet) regime and uses the appropriate equations.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Outputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          Activation time (s) and regime (Plume or Jet). Reference: PD 7974 Clause 8.9.
+        </p>
       </div>
     `;
   },

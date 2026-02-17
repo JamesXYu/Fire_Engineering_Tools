@@ -333,37 +333,28 @@ const ExternalfirespreadCalculator = {
   
   // Required: Get help window HTML
   getHelpHTML(windowId, sourceWindowId) {
-    // Get the active method combination from the source window
-    let activeMethod = '1-4'; // default
-    if (sourceWindowId) {
-      activeMethod = this.getActiveMethod(sourceWindowId);
-    }
-    
-    // Map combinations to method letters
-    const methodMap = {
-      '1-4': 'A',
-      '1-5': 'B',
-      '2-4': 'C',
-      '2-5': 'D'
-    };
-    
+    let activeMethod = '1-4';
+    if (sourceWindowId) activeMethod = this.getActiveMethod(sourceWindowId);
+    const methodMap = { '1-4': 'A', '1-5': 'B', '2-4': 'C', '2-5': 'D' };
     const methodLetter = methodMap[activeMethod] || 'A';
-    
+    const [r1, r2] = activeMethod.split('-');
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 20px; color: var(--text-primary);">Method ${methodLetter} (${activeMethod}) - Justification</h3>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Method ${methodLetter} Calculation</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            This method combines selection ${activeMethod.split('-')[0]} from the first row and selection ${activeMethod.split('-')[1]} from the second row.
-            Enter the required parameters to calculate the results.
-          </p>
-          <div class="math-formula">[METHOD ${methodLetter} FORMULA - REPLACE WITH ACTUAL FORMULA]</div>
-          <p style="color: var(--text-secondary); font-size: 12px; font-style: italic; margin-top: 10px;">
-            [METHOD ${methodLetter} JUSTIFICATION TEXT - REPLACE WITH ACTUAL CONTENT]
-          </p>
-        </div>
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          External fire spread — View factor and separation distance calculations between buildings or facades.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          Method ${methodLetter} — Row 1 option ${r1}, Row 2 option ${r2}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          Dimensions (width, height, distance), view factor or separation distance depending on mode.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Output</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          View factor (%) or required separation distance (m) for fire exposure assessment.
+        </p>
       </div>
     `;
   },

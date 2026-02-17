@@ -197,18 +197,23 @@ const ExternalSteelCalculator = {
 
   getHelpHTML(windowId, sourceWindowId) {
     const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'column';
+    const isColumn = method === 'column';
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 16px; color: var(--text-primary);">External Steel Temperature – Detail</h3>
-        <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
-          BS EN 1993-1-2 Annex B – Temperature of external steel members fully or partially engulfed in flame.
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          BS EN 1993-1-2 Annex B — Temperature of external steel members (column or beam) fully or partially engulfed in flame. Uses a simplified approximation; full accuracy requires complete Annex B (view factors, emissivities, etc.).
         </p>
-        <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
-          <strong>Note:</strong> This calculator uses a simplified approximation. Full accuracy requires the complete Annex B clause functions from BS EN 1991-1-2 and BS EN 1993-1-2 (view factors, emissivities, radiative heat flux I_z, I_f, etc.).
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          ${isColumn ? 'Column (Clause B.4)' : 'Beam (Clause B.5)'}
         </p>
-        <h4 style="color: var(--text-primary); margin-bottom: 8px;">${method === 'column' ? 'Column' : 'Beam'} – Clause B.${method === 'column' ? '4' : '5'}</h4>
-        <p style="color: var(--text-secondary); line-height: 1.6;">
-          Inputs: T_z (flame temp), T_o (opening temp), member dimensions (d_1, d_2), window geometry (w_t, h_eq), flame dimensions (L_H, L_L), view factor coefficients (C_1–C_4), λ (flame thickness).
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          Flame temperature, opening temperature, distances (d₁, d₂), window width, equivalent height, horizontal and vertical flame lengths, flame thickness (λ), convection coefficient, forced draught.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Output</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          Member temperature T<sub>m</sub> (°C) — weighted combination of flame and opening temperatures.
         </p>
       </div>
     `;

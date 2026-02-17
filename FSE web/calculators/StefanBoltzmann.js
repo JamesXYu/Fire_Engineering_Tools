@@ -120,14 +120,34 @@ const StefanBoltzmannCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
+    let T2 = null, epsilon = null, T1_or_P = null, result_val = null;
+    const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'temperature';
+    const isTemp = method === 'temperature';
+    if (sourceWindowId) {
+      const g = (id) => document.getElementById(`${id}-${sourceWindowId}`);
+      T2 = g('input1')?.value ? parseFloat(g('input1').value) : null;
+      epsilon = g('input2')?.value ? parseFloat(g('input2').value) : null;
+      T1_or_P = g('input3')?.value ? parseFloat(g('input3').value) : null;
+      result_val = g('result')?.value ? parseFloat(g('result').value) : null;
+    }
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 16px; color: var(--text-primary);">Stefan-Boltzmann Law – Detail</h3>
-        <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
-          P = ε × σ × (T₁⁴ − T₂⁴)
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          Radiative heat flux between two surfaces. P = emissivity × σ × (T₁⁴ − T₂⁴). σ = 5.67×10⁻⁸ W/(m²·K⁴).
         </p>
-        <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
-          <strong>P</strong> heat flux (kW/m²), <strong>ε</strong> emissivity, <strong>σ</strong> = 5.67×10⁻⁸ W/(m²·K⁴), <strong>T₁, T₂</strong> temperatures (K).
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          <strong>T₂</strong> (Ambient, °C) = ${T2 != null ? T2 : '—'}<br>
+          <strong>ε</strong> (Emissivity) = ${epsilon != null ? epsilon : '—'}<br>
+          <strong>${isTemp ? 'T₁' : 'P'}</strong> (${isTemp ? 'Hot surface temp, °C' : 'Heat flux, kW/m²'}) = ${T1_or_P != null ? T1_or_P : '—'}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Formula</h4>
+        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
+          \\( P = \\varepsilon \\times \\sigma \\times (T_1^4 - T_2^4) \\)
+        </div>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Conclusion</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          ${result_val != null ? `<strong>${isTemp ? 'Heat flux' : 'Temperature'} = ${result_val.toFixed(isTemp ? 2 : 1)} ${isTemp ? 'kW/m²' : '°C'}</strong>` : 'Enter all inputs to see the result.'}
         </p>
       </div>
     `;

@@ -326,6 +326,10 @@ body {
   scroll-behavior: auto;
 }
 
+.window-content-help {
+  padding: 3px 12px;
+}
+
 /* Ensure text selection works in help windows */
 .form-calculator {
   user-select: text;

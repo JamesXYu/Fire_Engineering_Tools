@@ -88,28 +88,82 @@ const MergeFlowCalculator = {
   },
   
   // Get help window HTML
-  getHelpHTML(windowId) {
+  getHelpHTML(windowId, sourceWindowId) {
+    let P = 'P', W = 'W', D = 'D';
+    let P_val = null, W_val = null, D_val = null;
+    let effectiveWidth = null;
+    let branch = '';
+
+    if (sourceWindowId) {
+      const peopleEl = document.getElementById(`people-${sourceWindowId}`);
+      const stairEl = document.getElementById(`stair-${sourceWindowId}`);
+      const distanceEl = document.getElementById(`distance-${sourceWindowId}`);
+      P_val = peopleEl && peopleEl.value ? parseFloat(peopleEl.value) : null;
+      W_val = stairEl && stairEl.value ? parseFloat(stairEl.value) : null;
+      D_val = distanceEl && distanceEl.value ? parseFloat(distanceEl.value) : null;
+      if (P_val != null) P = P_val;
+      if (W_val != null) W = W_val;
+      if (D_val != null) D = D_val;
+
+      if (P_val != null && W_val != null && D_val != null) {
+        const base = ((P_val / 2.5) + (W_val * 0.06)) / 80 * 1000;
+        if (P_val < 60) {
+          effectiveWidth = base;
+          branch = 'Fewer than 60 people — base formula';
+        } else if (D_val >= 2) {
+          effectiveWidth = base;
+          branch = '60+ people, distance ≥ 2 m — base formula';
+        } else {
+          effectiveWidth = Math.max(W_val, base);
+          branch = '60+ people, distance < 2 m — greater of stair width or formula';
+        }
+      }
+    }
+
+    const formulaDisplay = P_val != null && W_val != null
+      ? `\\( E = \\frac{(${P}/2.5) + (${W} \\times 0.06)}{80} \\times 1000 \\; \\text{mm} \\)`
+      : `\\( E = \\frac{(P/2.5) + (W \\times 0.06)}{80} \\times 1000 \\; \\text{mm} \\)`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 20px; color: var(--text-primary);">ADB Merging Flow Calculation Process</h3>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Step 1: Input Parameters</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            Enter the number of people and the width of the stair in millimeters.
-          </p>
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          ADB Merging Flow (Approved Document B). Effective width is derived from number of people, stair width, and travel distance.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 8px 0; font-size: 13px;">
+          <strong>P</strong> (Number of people) = ${P_val != null ? P_val : '—'}<br>
+          <strong>W</strong> (Stair width, mm) = ${W_val != null ? W_val : '—'}<br>
+          <strong>D</strong> (Distance, m) = ${D_val != null ? D_val : '—'}
+        </p>
+
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Which rule applies</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          <strong>Fewer than 60 people:</strong> Use the base formula.<br>
+          <strong>60 or more people, and travel distance ≥ 2 m:</strong> Use the base formula.<br>
+          <strong>60 or more people, and travel distance &lt; 2 m:</strong> The effective width is the greater of the stair width or the formula result.
+        </p>
+        ${effectiveWidth != null ? `<p style="color: var(--text-primary); line-height: 1.45; margin: 0 0 8px 0; font-size: 13px;"><strong>Applied:</strong> ${branch}</p>` : ''}
+
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Formula</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          Base formula:
+        </p>
+        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
+          \\( E = \\frac{(P/2.5) + (W \\times 0.06)}{80} \\times 1000 \\; \\text{mm} \\)
         </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Step 2: Calculate Flow Capacity</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            The flow capacity is calculated using the formula:
-          </p>
-          <div class="math-formula">Flow Capacity = (Stair Width (mm) / 5.5) × Number of People</div>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            This determines the maximum flow rate through the stairway.
-          </p>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          With values:
+        </p>
+        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
+          ${formulaDisplay}
         </div>
+
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 4: Conclusion</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          ${effectiveWidth != null
+            ? `<strong>Effective width = ${effectiveWidth.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} mm</strong>`
+            : 'Enter all inputs to see the result.'}
+        </p>
       </div>
     `;
   },

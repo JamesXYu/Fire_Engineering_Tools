@@ -594,7 +594,7 @@ function renderWindows() {
       return '';
     }
     return `
-      <div class="calculator-window ${window.maximized ? 'maximized' : ''}" 
+      <div class="calculator-window ${window.maximized ? 'maximized' : ''} ${window.type.endsWith('-help') ? 'help-window' : ''}" 
            style="left: ${window.maximized ? '0' : window.x + 'px'}; 
                   top: ${window.maximized ? '0' : window.y + 'px'}; 
                   width: ${window.maximized ? '100%' : window.width + 'px'}; 
@@ -612,7 +612,7 @@ function renderWindows() {
             <button class="control-btn close" data-window-id="${window.id}" data-action="close" title="Close">╳</button>
           </div>
         </div>
-        <div class="window-content">
+        <div class="window-content ${window.type.endsWith('-help') ? 'window-content-help' : ''}">
           ${getCalculatorContent(window.type, window.id)}
         </div>
         ${window.maximized || window.isAttached ? '' : '<div class="resize-handle" data-window-id="' + window.id + '"></div>'}
@@ -655,6 +655,9 @@ function renderWindows() {
         calculator.updateHelpContent(window.id, window.sourceWindowId);
       }
     });
+    if (typeof renderMathInElement === 'function') {
+      renderMathInElement(document.body, { throwOnError: false });
+    }
   }, 0);
 }
 

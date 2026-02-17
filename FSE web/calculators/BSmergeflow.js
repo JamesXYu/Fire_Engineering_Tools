@@ -261,64 +261,29 @@ const BS9999MergeFlowCalculator = {
   
   // Required: Get help window HTML
   getHelpHTML(windowId, sourceWindowId) {
-    // Get the active method from the source window
-    let activeMethod = 'method1'; // default
-    if (sourceWindowId) {
-      activeMethod = this.getActiveMethod(sourceWindowId);
-    }
-    
-    // Get method-specific justification content
-    let methodTitle = '';
-    let methodContent = '';
-    
-    if (activeMethod === 'method1') {
-      methodTitle = 'Upper Level - Justification';
-      methodContent = `
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Upper Level Calculation</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            This method is used for upper level calculations. Enter the required parameters to calculate the minimum final exit width.
-          </p>
-          <div class="math-formula">[UPPER LEVEL FORMULA - REPLACE WITH ACTUAL FORMULA]</div>
-          <p style="color: var(--text-secondary); font-size: 12px; font-style: italic; margin-top: 10px;">
-            [UPPER LEVEL JUSTIFICATION TEXT - REPLACE WITH ACTUAL CONTENT]
-          </p>
-        </div>
-      `;
-    } else if (activeMethod === 'method2') {
-      methodTitle = 'Basement Level - Justification';
-      methodContent = `
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Basement Level Calculation</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            This method is used for basement level calculations. Enter the required parameters to calculate the minimum final exit width.
-          </p>
-          <div class="math-formula">[BASEMENT LEVEL FORMULA - REPLACE WITH ACTUAL FORMULA]</div>
-          <p style="color: var(--text-secondary); font-size: 12px; font-style: italic; margin-top: 10px;">
-            [BASEMENT LEVEL JUSTIFICATION TEXT - REPLACE WITH ACTUAL CONTENT]
-          </p>
-        </div>
-      `;
-    } else if (activeMethod === 'method3') {
-      methodTitle = 'Multi-Level - Justification';
-      methodContent = `
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Multi-Level Calculation</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            This method is used for multi-level calculations. Enter the required parameters to calculate the minimum final exit width.
-          </p>
-          <div class="math-formula">[MULTI-LEVEL FORMULA - REPLACE WITH ACTUAL FORMULA]</div>
-          <p style="color: var(--text-secondary); font-size: 12px; font-style: italic; margin-top: 10px;">
-            [MULTI-LEVEL JUSTIFICATION TEXT - REPLACE WITH ACTUAL CONTENT]
-          </p>
-        </div>
-      `;
-    }
-    
+    let activeMethod = 'method1';
+    if (sourceWindowId) activeMethod = this.getActiveMethod(sourceWindowId);
+    const labels = { method1: 'Upper Level', method2: 'Basement Level', method3: 'Multi-Level' };
+    const label = labels[activeMethod] || 'Upper Level';
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 20px; color: var(--text-primary);">${methodTitle}</h3>
-        ${methodContent}
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          BS 9999 — Merge flow for minimum final exit width. Three methods: Upper Level, Basement Level, Multi-Level.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          ${label}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Condition</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          <strong>Upper Level:</strong> People and stair width determine minimum exit width.<br>
+          <strong>Basement Level:</strong> Similar logic for basement escape routes.<br>
+          <strong>Multi-Level:</strong> Merging flows from multiple levels.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Output</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          Minimum final exit width (mm) for the selected configuration.
+        </p>
       </div>
     `;
   },

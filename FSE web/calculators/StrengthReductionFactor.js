@@ -70,12 +70,31 @@ const StrengthReductionFactorCalculator = {
     `;
   },
 
-  getHelpHTML(windowId) {
+  getHelpHTML(windowId, sourceWindowId) {
+    let theta_val = null;
+    let k_val = null;
+    if (sourceWindowId) {
+      const inputEl = document.getElementById(`input1-${sourceWindowId}`);
+      const resultEl = document.getElementById(`result-${sourceWindowId}`);
+      theta_val = inputEl && inputEl.value ? parseFloat(inputEl.value) : null;
+      k_val = resultEl && resultEl.value ? parseFloat(resultEl.value) : null;
+    }
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 16px; color: var(--text-primary);">Strength Reduction Factor – Detail</h3>
-        <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
-          BS EN 1993-1-2:2005 Table 3.1 – Reduction factor for yield strength of carbon steel at uniform temperature θ<sub>a</sub>.
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          BS EN 1993-1-2:2005 Table 3.1 — Reduction factor k<sub>y,θ</sub> for yield strength of carbon steel at uniform temperature θ<sub>a</sub>.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          <strong>θ<sub>a</sub></strong> (Steel temperature, °C) = ${theta_val != null ? theta_val : '—'}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Formula</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          k<sub>y,θ</sub> is obtained by linear interpolation from Table 3.1 (θ<sub>a</sub> in °C vs k<sub>y,θ</sub>).
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Conclusion</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          ${k_val != null ? `<strong>k<sub>y,θ</sub> = ${k_val.toFixed(3)}</strong>` : 'Enter steel temperature to see the result.'}
         </p>
       </div>
     `;

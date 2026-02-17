@@ -121,34 +121,35 @@ const FirePlumeCalculator = {
     `;
   },
 
-  getHelpHTML(windowId) {
+  getHelpHTML(windowId, sourceWindowId) {
+    let Q = null, z = null, Qdd = null, T0 = null;
+    if (sourceWindowId) {
+      const g = (id) => document.getElementById(`${id}-${sourceWindowId}`);
+      Q = g('input1')?.value ? parseFloat(g('input1').value) : null;
+      z = g('input2')?.value ? parseFloat(g('input2').value) : null;
+      Qdd = g('input3')?.value ? parseFloat(g('input3').value) : null;
+      T0 = g('input4')?.value ? parseFloat(g('input4').value) : null;
+    }
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 20px; color: var(--text-primary);">Fire Plume Help</h3>
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Description</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            Calculates fire plume centre-line temperature rise, region (flame/intermittent/plume), and visible plume diameter.
-            Based on fse_plume.py and SFPE Handbook Chapter 51.
-          </p>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Inputs</h4>
-          <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">
-            <li><strong>Convective HRR:</strong> Convective heat release rate (kW)</li>
-            <li><strong>Height:</strong> Height above fire where plume is measured (m)</li>
-            <li><strong>HRR Density:</strong> Heat release rate per unit area (kW/m²)</li>
-            <li><strong>Ambient Temp:</strong> Ambient temperature (K), default 293.15</li>
-          </ul>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Outputs</h4>
-          <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">
-            <li><strong>Temperature Rise:</strong> Centre-line excess temperature (K)</li>
-            <li><strong>Region:</strong> Flame (z/Q^0.4 &lt; 0.08), Intermittent (0.08–0.2), Plume (&gt; 0.2)</li>
-            <li><strong>Plume Diameter:</strong> Visible plume diameter at height z (m), SFPE Eq 51.54</li>
-          </ul>
-        </div>
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          SFPE Handbook Chapter 51 — Centre-line temperature rise, plume region, and visible plume diameter.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          <strong>Q</strong> (Convective HRR, kW) = ${Q != null ? Q : '—'}<br>
+          <strong>z</strong> (Height, m) = ${z != null ? z : '—'}<br>
+          <strong>HRR density</strong> (kW/m²) = ${Qdd != null ? Qdd : '—'}<br>
+          <strong>T₀</strong> (Ambient, K) = ${T0 != null ? T0 : '—'}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Region</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          <strong>Flame:</strong> z/Q^0.4 &lt; 0.08. <strong>Intermittent:</strong> 0.08–0.2. <strong>Plume:</strong> &gt; 0.2.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Outputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          Temperature rise (K), region, visible plume diameter (m) — SFPE Eq 51.54.
+        </p>
       </div>
     `;
   },

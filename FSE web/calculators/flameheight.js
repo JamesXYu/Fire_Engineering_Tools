@@ -316,43 +316,26 @@ const FlameheightCalculator = {
       activeMethod = this.getActiveMethod(sourceWindowId);
       subMethod = this.getSubMethod(sourceWindowId);
     }
-    
     const config = this.getMethodConfig(activeMethod, subMethod);
-    
-    let methodTitle = `Method ${activeMethod}`;
-    if (activeMethod === '1') {
-      methodTitle += ` (Sub-option ${subMethod})`;
-    }
-    
+    const methodLabels = { '1': 'Circular fire', '2': 'Line fire', '3': 'Rectangular fire' };
+    const methodLabel = methodLabels[activeMethod] || 'Circular fire';
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 20px; color: var(--text-primary);">${methodTitle} - Help</h3>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Description</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            ${config.description}
-          </p>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Formula</h4>
-          <div class="math-formula">[METHOD ${activeMethod} FORMULA - REPLACE WITH ACTUAL FORMULA]</div>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Inputs</h4>
-          <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">
-            ${config.inputs.map(input => `<li>${input.label}</li>`).join('')}
-          </ul>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Outputs</h4>
-          <ul style="color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">
-            ${config.outputs.map(output => `<li>${output.label} (${output.unit})</li>`).join('')}
-          </ul>
-        </div>
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          PD 7974 — Flame height for various fire geometries. Dimensionless HRR correlations (McCaffrey/Heskestad-type).
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          ${methodLabel}${activeMethod === '1' ? ` (${(config.dropdownOptions || []).find(o => o.value === subMethod)?.label || '—'})` : ''}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          ${config.inputs.map(input => input.label).join(', ')}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Outputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          ${config.outputs.map(o => `${o.label} (${o.unit})`).join(', ')}
+        </p>
       </div>
     `;
   },

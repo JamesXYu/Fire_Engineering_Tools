@@ -138,11 +138,13 @@ const FireGrowthRateCalculator = {
     const isTime = method === 'time';
 
     return `
-      <div class="form-calculator help-detail" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 16px; color: var(--text-primary);">Fire Growth Rate – Detail</h3>
+      <div class="form-calculator help-detail" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          Fire growth: heat release rate vs time. Two modes: Time → HRR (table and graph) or HRR → Time.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Results</h4>
         <div class="help-results-section" data-source-window="${sourceWindowId || ''}">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Results</h4>
-          <div class="calc-chart-container" style="margin-bottom: 12px;">
+          <div class="calc-chart-container" style="margin: 4px 0 8px 0;">
             <canvas id="help-chart-${windowId}"></canvas>
           </div>
           <div class="calc-timeseries-table-wrapper">
@@ -152,15 +154,13 @@ const FireGrowthRateCalculator = {
             </table>
           </div>
         </div>
-        <div class="help-formula-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--window-border);">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Formula</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            Q = α × t<sup>n</sup> (t-squared fire when n = 2)
-          </p>
-          <p style="color: var(--text-secondary); line-height: 1.6; margin-top: 8px;">
-            <strong>Q</strong> heat release rate (kW), <strong>α</strong> growth factor (kW/sⁿ), <strong>t</strong> time (s), <strong>n</strong> growth power.
-          </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Formula</h4>
+        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
+          \\( Q = \\alpha \\times t^n \\) (t-squared when n = 2)
         </div>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          <strong>Q</strong> heat release rate (kW), <strong>α</strong> growth factor (kW/sⁿ), <strong>t</strong> time (s), <strong>n</strong> growth power.
+        </p>
       </div>
     `;
   },

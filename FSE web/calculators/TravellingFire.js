@@ -257,22 +257,20 @@ const TravellingFireCalculator = {
     const activeMethod = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'temperature';
     const isTemperature = activeMethod === 'temperature';
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 20px;">
-        <h3 style="margin-bottom: 20px; color: var(--text-primary);">Travelling Fire - ${isTemperature ? 'Temperature' : 'Flux'} Help</h3>
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Description</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            ${isTemperature
-              ? 'Calculates peak gas temperature at a structural element during a travelling fire. Based on fse_travelling_fire.py (Alpert correlations).'
-              : 'Calculates peak incident heat flux at a structural element during a travelling fire. Based on fse_travelling_fire_flux.py (EN 1991-1-2 Annex C).'}
-          </p>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: var(--text-primary); margin-bottom: 10px;">Input 10</h4>
-          <p style="color: var(--text-secondary); line-height: 1.6;">
-            ${isTemperature ? 'Max Near Field T (°C): Cap on near-field gas temperature.' : 'Max Near Field Flux (kW/m²): Cap on near-field incident heat flux.'}
-          </p>
-        </div>
+      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
+        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
+          ${isTemperature
+            ? 'Peak gas temperature at a structural element during a travelling fire. Alpert correlations (fse_travelling_fire.py).'
+            : 'Peak incident heat flux at a structural element during a travelling fire. EN 1991-1-2 Annex C (fse_travelling_fire_flux.py).'}
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Inputs</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
+          Fire load density, HRR density, room length/width, fire spread rate, beam location (height, length), max near-field ${isTemperature ? 'temperature (°C)' : 'flux (kW/m²)'}.
+        </p>
+        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Output</h4>
+        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
+          Peak ${isTemperature ? 'gas temperature (°C)' : 'incident heat flux (kW/m²)'} at the beam location.
+        </p>
       </div>
     `;
   },
