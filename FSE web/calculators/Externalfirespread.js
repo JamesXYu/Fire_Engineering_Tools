@@ -1069,6 +1069,8 @@ const ExternalfirespreadCalculator = {
         
         // Recalculate when checkbox state changes
         this.calculate(windowId);
+        // Update figure window when checkbox changes (centroid vs non-centroid)
+        this.updateFigureWindow(windowId);
       });
     }
   },
@@ -1091,11 +1093,13 @@ const ExternalfirespreadCalculator = {
     }
   },
   
-  // Update figure window image when method changes
+  // Update figure window image when method or checkbox changes
+  // 1-4 and 1-5 use same figure; 2-4 and 2-5 use same figure
+  // Checkbox unchecked (centroid): efs-parallel.png.png or efs-per.png.png
+  // Checkbox checked (non-centroid): efs-parallel-noncenter.png.png or efs-per-noncenter.png.png
   updateFigureWindow(sourceWindowId) {
     if (typeof window === 'undefined' || !window.state) return;
     
-    // Find the figure window for this source window
     const figureWindow = window.state.windows.find(w => 
       w.sourceWindowId === sourceWindowId && 
       w.type === 'Externalfirespread-figure'
@@ -1103,26 +1107,17 @@ const ExternalfirespreadCalculator = {
     
     if (figureWindow) {
       const activeMethod = this.getActiveMethod(sourceWindowId);
-      const newImagePath = `Figures/Externalfirespread-${activeMethod}.png`;
+      const isNonCentroid = this.getCheckboxState(sourceWindowId);
+      const methodGroup = (activeMethod === '1-4' || activeMethod === '1-5') ? 'parallel' : 'per';
+      const suffix = isNonCentroid ? '-noncenter' : '';
+      const newImagePath = `Figures/efs-${methodGroup}${suffix}.png.png`;
       
-      // Map combinations to method letters
-      const methodMap = {
-        '1-4': 'A',
-        '1-5': 'B',
-        '2-4': 'C',
-        '2-5': 'D'
-      };
+      const methodLetter = { '1-4': 'A', '1-5': 'B', '2-4': 'C', '2-5': 'D' }[activeMethod] || 'A';
       
-      const methodLetter = methodMap[activeMethod] || 'A';
-      
-      // Update image path and method
       figureWindow.figureImagePath = newImagePath;
       figureWindow.activeMethod = activeMethod;
-      
-      // Update title based on method
       figureWindow.title = `Method ${methodLetter} (${activeMethod}) - Figure`;
       
-      // Re-render windows to update figure content
       if (typeof window.renderWindows === 'function') {
         window.renderWindows();
       }

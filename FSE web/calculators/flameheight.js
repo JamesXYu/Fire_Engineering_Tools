@@ -626,9 +626,9 @@ const FlameheightCalculator = {
     if (figureWindow) {
       const activeMethod = this.getActiveMethod(sourceWindowId);
       const subMethod = this.getSubMethod(sourceWindowId);
-      let newImagePath = `Figures/Flameheight-${activeMethod}.png`;
+      let newImagePath = `Figures/Flameheight-${activeMethod}.png.png`;
       if (activeMethod === '1') {
-        newImagePath = `Figures/Flameheight-${activeMethod}-${subMethod}.png`;
+        newImagePath = `Figures/Flameheight-${activeMethod}-${subMethod}.png.png`;
       }
       
       figureWindow.figureImagePath = newImagePath;

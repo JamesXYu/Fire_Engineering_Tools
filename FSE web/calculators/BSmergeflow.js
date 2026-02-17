@@ -687,7 +687,7 @@ const BS9999MergeFlowCalculator = {
     
     if (figureWindow) {
       const activeMethod = this.getActiveMethod(sourceWindowId);
-      const newImagePath = `Figures/BSmergeflow-${activeMethod}.png`;
+      const newImagePath = `Figures/BSmergeflow-${activeMethod}.png.png`;
       
       // Update image path and method
       figureWindow.figureImagePath = newImagePath;

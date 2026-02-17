@@ -2,7 +2,7 @@
 const state = {
   windows: [],
   nextZIndex: 1000,
-  theme: 'dark',
+  theme: 'light',
   isDragging: false,
   isResizing: false,
   dragData: null
@@ -82,7 +82,7 @@ function loadFromStorage() {
     const saved = localStorage.getItem('calculator-settings');
     if (saved) {
       const parsed = JSON.parse(saved);
-      state.theme = parsed.theme || 'dark';
+      state.theme = parsed.theme || 'light';
     }
   } catch (e) {
     console.error('Failed to load from localStorage', e);
@@ -905,7 +905,7 @@ function getCalculatorContent(type, windowId) {
   // Check if it's a figure window
   if (type.endsWith('-figure')) {
     const figureWindow = state.windows.find(w => w.id === windowId);
-    const imagePath = figureWindow ? figureWindow.figureImagePath : `Figures/${type.replace('-figure', '')}.png`;
+    const imagePath = figureWindow ? figureWindow.figureImagePath : `Figures/${type.replace('-figure', '')}.png.png`;
     return `
       <div style="padding: 20px; display: flex; justify-content: center; align-items: center; height: 100%; overflow: auto;">
         <img src="${imagePath}" alt="Figure" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=\\'color: var(--text-secondary); text-align: center;\\'>Figure image not found: ${imagePath}</p>'">
@@ -954,12 +954,9 @@ function openFigureWindow(sourceWindowId) {
   // Check if figure window already exists for this source window
   const existingFigureWindow = state.windows.find(w => w.sourceWindowId === sourceWindowId && w.type === figureType);
   if (existingFigureWindow) {
-    // Update figure image if method changed (for BSmergeflow)
-    if (sourceWindow.type === 'BSmergeflow' && calculator && calculator.getActiveMethod) {
-      const activeMethod = calculator.getActiveMethod(sourceWindow.id);
-      const newImagePath = `Figures/${sourceWindow.type}-${activeMethod}.png`;
-      existingFigureWindow.figureImagePath = newImagePath;
-      existingFigureWindow.activeMethod = activeMethod;
+    // Update figure image if method changed (for method-based calculators)
+    if (calculator && calculator.updateFigureWindow) {
+      calculator.updateFigureWindow(sourceWindowId);
     }
     // Focus existing figure window
     focusWindow(existingFigureWindow.id);
@@ -971,21 +968,33 @@ function openFigureWindow(sourceWindowId) {
   }
   
   // Determine figure image path based on calculator type and method
-  let figureImagePath = `Figures/${sourceWindow.type}.png`;
+  let figureImagePath = `Figures/${sourceWindow.type}.png.png`;
   let figureTitle = calculator && calculator.name ? `${calculator.name} - Figure` : 'Figure';
   
-  // For BSmergeflow, use method-specific image
+  // For method-based calculators: use method-specific image (no general figure)
   if (sourceWindow.type === 'BSmergeflow' && calculator && calculator.getActiveMethod) {
     const activeMethod = calculator.getActiveMethod(sourceWindow.id);
-    figureImagePath = `Figures/${sourceWindow.type}-${activeMethod}.png`;
-    // Update title based on method
-    if (activeMethod === 'method1') {
-      figureTitle = 'Upper Level - Figure';
-    } else if (activeMethod === 'method2') {
-      figureTitle = 'Basement Level - Figure';
-    } else if (activeMethod === 'method3') {
-      figureTitle = 'Multi-Level - Figure';
+    figureImagePath = `Figures/${sourceWindow.type}-${activeMethod}.png.png`;
+    if (activeMethod === 'method1') figureTitle = 'Upper Level - Figure';
+    else if (activeMethod === 'method2') figureTitle = 'Basement Level - Figure';
+    else if (activeMethod === 'method3') figureTitle = 'Multi-Level - Figure';
+  } else if (sourceWindow.type === 'Flameheight' && calculator && calculator.getActiveMethod) {
+    const activeMethod = calculator.getActiveMethod(sourceWindowId);
+    const subMethod = calculator.getSubMethod ? calculator.getSubMethod(sourceWindowId) : null;
+    if (activeMethod === '1' && subMethod) {
+      figureImagePath = `Figures/Flameheight-${activeMethod}-${subMethod}.png.png`;
+    } else {
+      figureImagePath = `Figures/Flameheight-${activeMethod}.png.png`;
     }
+    figureTitle = `Method ${activeMethod} - Figure`;
+  } else if (sourceWindow.type === 'Externalfirespread' && calculator && calculator.getActiveMethod) {
+    const activeMethod = calculator.getActiveMethod(sourceWindowId);
+    const isNonCentroid = calculator.getCheckboxState ? calculator.getCheckboxState(sourceWindowId) : false;
+    const methodGroup = (activeMethod === '1-4' || activeMethod === '1-5') ? 'parallel' : 'per';
+    const suffix = isNonCentroid ? '-noncenter' : '';
+    figureImagePath = `Figures/efs-${methodGroup}${suffix}.png.png`;
+    const methodLetter = { '1-4': 'A', '1-5': 'B', '2-4': 'C', '2-5': 'D' }[activeMethod] || 'A';
+    figureTitle = `Method ${methodLetter} (${activeMethod}) - Figure`;
   }
   
   // Create figure window with fixed size
