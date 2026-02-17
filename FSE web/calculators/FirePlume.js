@@ -122,34 +122,117 @@ const FirePlumeCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
-    let Q = null, z = null, Qdd = null, T0 = null;
-    if (sourceWindowId) {
-      const g = (id) => document.getElementById(`${id}-${sourceWindowId}`);
-      Q = g('input1')?.value ? parseFloat(g('input1').value) : null;
-      z = g('input2')?.value ? parseFloat(g('input2').value) : null;
-      Qdd = g('input3')?.value ? parseFloat(g('input3').value) : null;
-      T0 = g('input4')?.value ? parseFloat(g('input4').value) : null;
+    const srcId = sourceWindowId || windowId;
+    const reportId = `fireplume-report-${windowId}`;
+    const copyBtnId = `fireplume-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      if (n === 4 && (raw === '' || !raw)) return 293.15;
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = (n) => {
+      const el = document.getElementById(`result${n}-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : String(x));
+
+    const Q = getVal(1);
+    const z = getVal(2);
+    const Qdd = getVal(3);
+    const T0 = getVal(4) ?? 293.15;
+    const hasAll = Q != null && Q > 0 && z != null && z > 0 && Qdd != null && Qdd > 0;
+
+    const inputTable = `
+      <tr><td>Convective HRR (Q̇_c)</td><td>${fmt(Q)}</td><td>kW</td></tr>
+      <tr><td>Height (z)</td><td>${fmt(z)}</td><td>m</td></tr>
+      <tr><td>HRR Density</td><td>${fmt(Qdd)}</td><td>kW/m²</td></tr>
+      <tr><td>Ambient Temperature (T₀)</td><td>${fmt(T0)}</td><td>K</td></tr>`;
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const methodology = `
+      <p><strong>Step 1: Region Selection</strong></p>
+      <p>z / Q̇_c^(2/5) determines the plume region:</p>
+      <div style="${formulaBlockStyle}">z / Q̇_c^0.4 &lt; 0.08 → Flame (region 0)</div>
+      <div style="${formulaBlockStyle}">0.08 ≤ z / Q̇_c^0.4 ≤ 0.2 → Intermittent (region 1)</div>
+      <div style="${formulaBlockStyle}">z / Q̇_c^0.4 &gt; 0.2 → Plume (region 2)</div>
+      <p><strong>Step 2: Centre-Line Temperature Rise</strong></p>
+      <p>Region-specific coefficients (k, ν): Flame k=6.8 ν=½; Intermittent k=1.9 ν=0; Plume k=1.1 ν=−⅓</p>
+      <div style="${formulaBlockStyle}">ΔT = (k²/C² × (z/Q̇_c^(2/5))^(2ν−1) × T₀) / (2g)</div>
+      <p><em>C = 0.9, g = 9.81 m/s²</em></p>
+      <p><strong>Step 3: Virtual Fire Origin (PD 7974 Eq 10)</strong></p>
+      <div style="${formulaBlockStyle}">z₀ = -1.02 × D + 0.083 × Q̇^(2/5)</div>
+      <p><em>D = 2 × √(Q̇_c / (π × HRR_density))</em></p>
+      <p><strong>Step 4: Visible Plume Diameter (SFPE Eq 51.54)</strong></p>
+      <div style="${formulaBlockStyle}">d = 0.48 × √(T_c/T₀) × (z − z₀)</div>
+      <p><em>T_c = T₀ + ΔT. Only when z &gt; z₀.</em></p>`;
+
+    let tempRise = getOutput(1);
+    let region = getOutput(2);
+    let diameter = getOutput(3);
+    let workedExample = '';
+
+    if (hasAll) {
+      const zQFactor = z / Math.pow(Q, 2/5);
+      let regNum = 2;
+      if (zQFactor < 0.08) regNum = 0;
+      else if (zQFactor <= 0.2) regNum = 1;
+      const regionNames = ['Flame', 'Intermittent', 'Plume'];
+      region = regionNames[regNum];
+
+      const C = 0.9;
+      const g = 9.81;
+      const k = regNum === 0 ? 6.8 : regNum === 1 ? 1.9 : 1.1;
+      const nu = regNum === 0 ? 1/2 : regNum === 1 ? 0 : -1/3;
+      const deltaT = (Math.pow(k/C, 2) * Math.pow(zQFactor, 2*nu - 1) * T0) / (2 * g);
+      tempRise = fmt(deltaT);
+
+      const r = Math.sqrt((Q / Qdd) / Math.PI);
+      const D = 2 * r;
+      const z0 = -1.02 * D + 0.083 * Math.pow(Q, 2/5);
+      const Tc = T0 + deltaT;
+      const diam = z > z0 ? 0.48 * Math.sqrt(Tc/T0) * (z - z0) : 0;
+      diameter = fmt(Math.max(0, diam));
+
+      workedExample = `
+        <p>Given: Q̇_c = ${fmt(Q)} kW, z = ${fmt(z)} m, HRR_density = ${fmt(Qdd)} kW/m², T₀ = ${fmt(T0)} K</p>
+        <div style="${formulaBlockStyle}">z / Q̇_c^0.4 = ${fmt(z)} / ${fmt(Math.pow(Q, 0.4))} = ${fmt(zQFactor)} → Region: ${region}</div>
+        <div style="${formulaBlockStyle}">ΔT = ${tempRise} K</div>
+        <p>D = 2√(${fmt(Q)}/(π×${fmt(Qdd)})) = ${fmt(D)} m; z₀ = ${fmt(z0)} m</p>
+        <div style="${formulaBlockStyle}">Plume diameter = 0.48 × √(${fmt(Tc)}/${fmt(T0)}) × (${fmt(z)} − ${fmt(z0)}) = ${diameter} m</div>`;
+    } else {
+      workedExample = '<p>Enter all input values (Q̇_c, z, HRR density) to see worked example.</p>';
     }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Temperature Rise</td><td style="padding:6px; border:1px solid var(--window-border);">${tempRise}</td><td style="padding:6px; border:1px solid var(--window-border);">K</td></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Region</td><td style="padding:6px; border:1px solid var(--window-border);">${region}</td><td style="padding:6px; border:1px solid var(--window-border);">-</td></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Plume Diameter</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${diameter}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>m</strong></td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          SFPE Handbook Chapter 51 — Centre-line temperature rise, plume region, and visible plume diameter.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          <strong>Q</strong> (Convective HRR, kW) = ${Q != null ? Q : '—'}<br>
-          <strong>z</strong> (Height, m) = ${z != null ? z : '—'}<br>
-          <strong>HRR density</strong> (kW/m²) = ${Qdd != null ? Qdd : '—'}<br>
-          <strong>T₀</strong> (Ambient, K) = ${T0 != null ? T0 : '—'}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Region</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          <strong>Flame:</strong> z/Q^0.4 &lt; 0.08. <strong>Intermittent:</strong> 0.08–0.2. <strong>Plume:</strong> &gt; 0.2.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Outputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          Temperature rise (K), region, visible plume diameter (m) — SFPE Eq 51.54.
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">FIRE PLUME CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: SFPE Handbook Chapter 51, PD 7974 Eq 10</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

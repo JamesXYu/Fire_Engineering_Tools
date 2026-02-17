@@ -259,31 +259,202 @@ const BS9999MergeFlowCalculator = {
     `;
   },
   
-  // Required: Get help window HTML
+  // Required: Get help window HTML - BS 9999 Merge Flow Calculation Report
   getHelpHTML(windowId, sourceWindowId) {
-    let activeMethod = 'method1';
-    if (sourceWindowId) activeMethod = this.getActiveMethod(sourceWindowId);
-    const labels = { method1: 'Upper Level', method2: 'Basement Level', method3: 'Multi-Level' };
-    const label = labels[activeMethod] || 'Upper Level';
+    const srcId = sourceWindowId || windowId;
+    const activeMethod = this.getActiveMethod(srcId);
+    const reportId = `bsmergeflow-report-${windowId}`;
+    const copyBtnId = `bsmergeflow-copy-${windowId}`;
+
+    // Helper to get input value
+    const getVal = (method, inputNum) => {
+      const el = document.getElementById(`${method}-input${inputNum}-${srcId}`);
+      const v = el ? parseFloat(el.value) : NaN;
+      return isNaN(v) ? '—' : v;
+    };
+    const getResult = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 2 }) : String(x));
+
+    let inputTable = '';
+    let methodology = '';
+    let workedExample = '';
+    let qMerge = '—';
+    let wFinal = getResult();
+    let safetyFactor = '1.0';
+    let existingExit = '—';
+
+    if (activeMethod === 'method1') {
+      const P = parseFloat(getVal('method1', 1));
+      const Ws = parseFloat(getVal('method1', 2));
+      const D = parseFloat(getVal('method1', 3));
+      const We = parseFloat(getVal('method1', 4));
+      const Wp = parseFloat(getVal('method1', 5));
+      const hasAll = !isNaN(P) && !isNaN(Ws) && !isNaN(D) && !isNaN(We) && !isNaN(Wp);
+      const dLess2 = hasAll && D < 2;
+      const coeff = dLess2 ? 0.75 : 0.50;
+      const qCalc = hasAll ? (P * Wp) + (coeff * Ws) : null;
+      qMerge = qCalc != null ? fmt(qCalc) : '—';
+      const wCalc = hasAll ? Math.max(qCalc, We) : null;
+      wFinal = wCalc != null ? fmt(wCalc) : wFinal;
+      safetyFactor = '1.0';
+      existingExit = hasAll ? fmt(We) : '—';
+
+      inputTable = `
+        <tr><td>Number of People (P)</td><td>${fmt(P)}</td><td>persons</td></tr>
+        <tr><td>Stair Width (Wₛ)</td><td>${fmt(Ws)}</td><td>mm</td></tr>
+        <tr><td>Travel Distance (D)</td><td>${fmt(D)}</td><td>m</td></tr>
+        <tr><td>Storey Exit Width (Wₑ)</td><td>${fmt(We)}</td><td>mm</td></tr>
+        <tr><td>Door Width per Person (Wₚ)</td><td>${fmt(Wp)}</td><td>mm/person</td></tr>`;
+
+      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+      methodology = `
+        <p><strong>Step 1: Travel Distance Assessment</strong></p>
+        <ul><li>If D &lt; 2 m: Occupants reach stair quickly, merge before stair flow is fully established</li>
+        <li>If D ≥ 2 m: Occupants take longer to reach stair, allowing stair flow to partially establish</li></ul>
+        <p><strong>Step 2: Merge Flow Formulas</strong></p>
+        <div style="${formulaBlockStyle}">If D &lt; 2 m: Q_merge = (P × Wₚ) + (0.75 × Wₛ)</div>
+        <div style="${formulaBlockStyle}">If D ≥ 2 m: Q_merge = (P × Wₚ) + (0.50 × Wₛ)</div>
+        <p><strong>Step 3: Final Exit Width</strong></p>
+        <div style="${formulaBlockStyle}">W_final = max(Q_merge, Wₑ)</div>`;
+
+      if (hasAll) {
+        workedExample = `
+        <p>Given: P = ${fmt(P)}, Wₛ = ${fmt(Ws)} mm, D = ${fmt(D)} m, Wₑ = ${fmt(We)} mm, Wₚ = ${fmt(Wp)} mm/person</p>
+        <p>Since D ${dLess2 ? '&lt;' : '≥'} 2 m:</p>
+        <div style="${formulaBlockStyle}">Q_merge = (${fmt(P)} × ${fmt(Wp)}) + (${coeff} × ${fmt(Ws)}) = ${qMerge} mm</div>
+        <div style="${formulaBlockStyle}">W_final = max(${qMerge} mm, ${fmt(We)} mm) = ${wFinal} mm</div>`;
+      } else {
+        workedExample = '<p>Enter all input values to see worked example.</p>';
+      }
+    } else if (activeMethod === 'method2') {
+      const P = parseFloat(getVal('method2', 1));
+      const Wu = parseFloat(getVal('method2', 2));
+      const D = parseFloat(getVal('method2', 3));
+      const Wd = parseFloat(getVal('method2', 4));
+      const Wp = parseFloat(getVal('method2', 5));
+      const hasAll = !isNaN(P) && !isNaN(Wu) && !isNaN(D) && !isNaN(Wd) && !isNaN(Wp);
+      const wEff = hasAll ? Math.min(Wu, Wd) * 0.85 : null;
+      const dLess2 = hasAll && D < 2;
+      const coeff = dLess2 ? 0.85 : 0.60;
+      const qCalc = hasAll ? (P * Wp) + (coeff * wEff) : null;
+      qMerge = qCalc != null ? fmt(qCalc) : '—';
+      const wCalc = hasAll ? qCalc * 1.10 : null;
+      wFinal = wCalc != null ? fmt(wCalc) : wFinal;
+      safetyFactor = '1.10';
+      existingExit = '—';
+
+      inputTable = `
+        <tr><td>Number of People (P)</td><td>${fmt(P)}</td><td>persons</td></tr>
+        <tr><td>Stair Width Up (Wᵤ)</td><td>${fmt(Wu)}</td><td>mm</td></tr>
+        <tr><td>Travel Distance (D)</td><td>${fmt(D)}</td><td>m</td></tr>
+        <tr><td>Stair Width Down (W_d)</td><td>${fmt(Wd)}</td><td>mm</td></tr>
+        <tr><td>Door Width per Person (Wₚ)</td><td>${fmt(Wp)}</td><td>mm/person</td></tr>`;
+
+      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+      methodology = `
+        <p><strong>Step 1: Effective Stair Width</strong></p>
+        <div style="${formulaBlockStyle}">W_eff = min(Wᵤ, W_d) × 0.85</div>
+        <p><strong>Step 2: Merge Flow Formulas</strong></p>
+        <div style="${formulaBlockStyle}">If D &lt; 2 m: Q_merge = (P × Wₚ) + (0.85 × W_eff)</div>
+        <div style="${formulaBlockStyle}">If D ≥ 2 m: Q_merge = (P × Wₚ) + (0.60 × W_eff)</div>
+        <p><strong>Step 3: Basement Safety Factor</strong></p>
+        <div style="${formulaBlockStyle}">W_final = Q_merge × 1.10</div>`;
+
+      if (hasAll) {
+        workedExample = `
+        <div style="${formulaBlockStyle}">W_eff = min(${fmt(Wu)} mm, ${fmt(Wd)} mm) × 0.85 = ${fmt(wEff)} mm</div>
+        <p>Since D ${dLess2 ? '&lt;' : '≥'} 2 m:</p>
+        <div style="${formulaBlockStyle}">Q_merge = (${fmt(P)} × ${fmt(Wp)}) + (${coeff} × ${fmt(wEff)}) = ${qMerge} mm</div>
+        <div style="${formulaBlockStyle}">W_final = ${qMerge} mm × 1.10 = ${wFinal} mm</div>`;
+      } else {
+        workedExample = '<p>Enter all input values to see worked example.</p>';
+      }
+    } else {
+      // method3
+      const Pu = parseFloat(getVal('method3', 1));
+      const Pb = parseFloat(getVal('method3', 2));
+      const Wu = parseFloat(getVal('method3', 3));
+      const Wd = parseFloat(getVal('method3', 4));
+      const We = parseFloat(getVal('method3', 5));
+      const D = parseFloat(getVal('method3', 6));
+      const Wp = parseFloat(getVal('method3', 7));
+      const hasAll = !isNaN(Pu) && !isNaN(Pb) && !isNaN(Wu) && !isNaN(Wd) && !isNaN(We) && !isNaN(D) && !isNaN(Wp);
+      const qUpper = hasAll ? (Pu * Wp) + (0.75 * Wu) : null;
+      const qLower = hasAll ? (Pb * Wp) + (0.75 * Wd) : null;
+      const dLess2 = hasAll && D < 2;
+      const qTotal = hasAll ? (dLess2 ? Math.max(qUpper, qLower) + (0.50 * Math.min(qUpper, qLower)) : 0.70 * (qUpper + qLower)) : null;
+      qMerge = qTotal != null ? fmt(qTotal) : '—';
+      const wCalc = hasAll ? Math.max(qTotal, We) * 1.15 : null;
+      wFinal = wCalc != null ? fmt(wCalc) : wFinal;
+      safetyFactor = '1.15';
+      existingExit = hasAll ? fmt(We) : '—';
+
+      inputTable = `
+        <tr><td>Upper Level Occupancy (Pᵤ)</td><td>${fmt(Pu)}</td><td>persons</td></tr>
+        <tr><td>Basement Level Occupancy (P_b)</td><td>${fmt(Pb)}</td><td>persons</td></tr>
+        <tr><td>Stair Width Up (Wᵤ)</td><td>${fmt(Wu)}</td><td>mm</td></tr>
+        <tr><td>Stair Width Down (W_d)</td><td>${fmt(Wd)}</td><td>mm</td></tr>
+        <tr><td>Storey Exit Width (Wₑ)</td><td>${fmt(We)}</td><td>mm</td></tr>
+        <tr><td>Distance to Stair (D)</td><td>${fmt(D)}</td><td>m</td></tr>
+        <tr><td>Door Width per Person (Wₚ)</td><td>${fmt(Wp)}</td><td>mm/person</td></tr>`;
+
+      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+      methodology = `
+        <p><strong>Step 1: Individual Level Merge Requirements</strong></p>
+        <div style="${formulaBlockStyle}">Upper Level: Q_upper = (Pᵤ × Wₚ) + (0.75 × Wᵤ)</div>
+        <div style="${formulaBlockStyle}">Basement Level: Q_lower = (P_b × Wₚ) + (0.75 × W_d)</div>
+        <p><strong>Step 2: Cumulative Flow Formulas</strong></p>
+        <div style="${formulaBlockStyle}">If D &lt; 2 m (Simultaneous arrival): Q_total = max(Q_upper, Q_lower) + [0.50 × min(Q_upper, Q_lower)]</div>
+        <div style="${formulaBlockStyle}">If D ≥ 2 m (Staggered arrival): Q_total = 0.70 × (Q_upper + Q_lower)</div>
+        <p><strong>Step 3: Accumulation Allowance</strong></p>
+        <div style="${formulaBlockStyle}">W_final = max(Q_total, Wₑ) × 1.15</div>`;
+
+      if (hasAll) {
+        const formulaText = dLess2
+          ? `max(${fmt(qUpper)}, ${fmt(qLower)}) + [0.50 × min(${fmt(qUpper)}, ${fmt(qLower)})]`
+          : `0.70 × (${fmt(qUpper)} + ${fmt(qLower)})`;
+        workedExample = `
+        <div style="${formulaBlockStyle}">Q_upper = (${fmt(Pu)} × ${fmt(Wp)}) + (0.75 × ${fmt(Wu)}) = ${fmt(qUpper)} mm</div>
+        <div style="${formulaBlockStyle}">Q_lower = (${fmt(Pb)} × ${fmt(Wp)}) + (0.75 × ${fmt(Wd)}) = ${fmt(qLower)} mm</div>
+        <p>Since D ${dLess2 ? '&lt;' : '≥'} 2 m:</p>
+        <div style="${formulaBlockStyle}">Q_total = ${formulaText} = ${qMerge} mm</div>
+        <div style="${formulaBlockStyle}">W_final = max(${qMerge} mm, ${fmt(We)} mm) × 1.15 = ${wFinal} mm</div>`;
+      } else {
+        workedExample = '<p>Enter all input values to see worked example.</p>';
+      }
+    }
+
+    const commonSections = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Calculation Step</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Merge Flow Requirement</td><td style="padding:6px; border:1px solid var(--window-border);">${qMerge}</td><td style="padding:6px; border:1px solid var(--window-border);">mm</td></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Existing Exit Width</td><td style="padding:6px; border:1px solid var(--window-border);">${existingExit}</td><td style="padding:6px; border:1px solid var(--window-border);">mm</td></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Applied Safety Factor</td><td style="padding:6px; border:1px solid var(--window-border);">${safetyFactor}</td><td style="padding:6px; border:1px solid var(--window-border);">-</td></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Minimum Final Exit Width</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${wFinal}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>mm</strong></td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          BS 9999 — Merge flow for minimum final exit width. Three methods: Upper Level, Basement Level, Multi-Level.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          ${label}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Condition</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          <strong>Upper Level:</strong> People and stair width determine minimum exit width.<br>
-          <strong>Basement Level:</strong> Similar logic for basement escape routes.<br>
-          <strong>Multi-Level:</strong> Merging flows from multiple levels.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Output</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          Minimum final exit width (mm) for the selected configuration.
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">BS 9999 MERGE FLOW CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: BS 9999:2017 - Annex B, Clauses 16 &amp; 17</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Step 4: Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${commonSections}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },
@@ -325,32 +496,27 @@ const BS9999MergeFlowCalculator = {
       }
       
     } else if (activeMethod === 'method2') {
-      // Method 2: 3 inputs
+      // Method 2: Basement (5 inputs) - P, Wu, D, Wd, Wp
       const input1El = document.getElementById(`method2-input1-${windowId}`);
       const input2El = document.getElementById(`method2-input2-${windowId}`);
       const input3El = document.getElementById(`method2-input3-${windowId}`);
       const input4El = document.getElementById(`method2-input4-${windowId}`);
       const input5El = document.getElementById(`method2-input5-${windowId}`);
       
-      if (!input1El || !input2El || !input3El || input4El || input5El) return;
+      if (!input1El || !input2El || !input3El || !input4El || !input5El) return;
       
-      const input1 = parseFloat(input1El.value) || 0;
-      const input2 = parseFloat(input2El.value) || 0;
-      const input3 = parseFloat(input3El.value) || 0;
-      const input4 = parseFloat(input4El.value) || 0;
-      const input5 = parseFloat(input5El.value) || 0;
+      const P = parseFloat(input1El.value) || 0;
+      const Wu = parseFloat(input2El.value) || 0;
+      const D = parseFloat(input3El.value) || 0;
+      const Wd = parseFloat(input4El.value) || 0;
+      const Wp = parseFloat(input5El.value) || 0;
 
-      if (input1 && input2 && input3 && input4 && input5) {
+      if (P && Wu && D && Wd && Wp) {
         allInputsValid = true;
-        if (input1 && input2 && input3 && input4 && input5) {
-          allInputsValid = true;
-          if (input1 > 60 && input3 < 2){
-            result = input2 + input4;
-          }
-          else{
-            result = input1* input5 + 0.75 * input2;
-          }
-        }
+        const wEff = Math.min(Wu, Wd) * 0.85;
+        const coeff = D < 2 ? 0.85 : 0.60;
+        const qMerge = (P * Wp) + (coeff * wEff);
+        result = qMerge * 1.10;
       }
       
     } else if (activeMethod === 'method3') {

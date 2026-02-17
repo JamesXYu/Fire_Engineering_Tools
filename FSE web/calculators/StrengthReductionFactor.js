@@ -71,31 +71,76 @@ const StrengthReductionFactorCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
-    let theta_val = null;
-    let k_val = null;
-    if (sourceWindowId) {
-      const inputEl = document.getElementById(`input1-${sourceWindowId}`);
-      const resultEl = document.getElementById(`result-${sourceWindowId}`);
-      theta_val = inputEl && inputEl.value ? parseFloat(inputEl.value) : null;
-      k_val = resultEl && resultEl.value ? parseFloat(resultEl.value) : null;
+    const srcId = sourceWindowId || windowId;
+    const reportId = `strengthreduction-report-${windowId}`;
+    const copyBtnId = `strengthreduction-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const theta_a = getVal(1);
+    const kOutput = getOutput();
+
+    const inputTable = `
+      <tr><td>Steel temperature θ<sub>a</sub></td><td>${fmt(theta_a)}</td><td>°C</td></tr>`;
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const methodology = `
+      <p><strong>Step 1: Table 3.1 — Reduction factor for yield strength</strong></p>
+      <p>k<sub>y,θ</sub> = f<sub>y,θ</sub> / f<sub>y</sub> — ratio of yield strength at temperature θ<sub>a</sub> to yield strength at 20°C.</p>
+      <p><strong>Step 2: Table values (BS EN 1993-1-2 Table 3.1)</strong></p>
+      <div style="${formulaBlockStyle}">θ<sub>a</sub> (°C): 20, 100, 200, 300, 400 → k<sub>y,θ</sub> = 1.000</div>
+      <div style="${formulaBlockStyle}">500 → 0.780; 600 → 0.470; 700 → 0.230; 800 → 0.110; 900 → 0.060</div>
+      <div style="${formulaBlockStyle}">1000 → 0.040; 1100 → 0.020; 1200 → 0.000</div>
+      <p><strong>Step 3: Linear interpolation</strong></p>
+      <div style="${formulaBlockStyle}">For θ<sub>a</sub> between t₀ and t₁: k<sub>y,θ</sub> = k₀ + (k₁ − k₀) × (θ<sub>a</sub> − t₀) / (t₁ − t₀)</div>
+      <p><em>θ<sub>a</sub> ≤ 20°C: k<sub>y,θ</sub> = 1.0; θ<sub>a</sub> ≥ 1200°C: k<sub>y,θ</sub> = 0.0</em></p>`;
+
+    let workedExample = '';
+    if (theta_a != null && theta_a >= 0) {
+      workedExample = `
+        <p>Given: θ<sub>a</sub> = ${fmt(theta_a)} °C</p>
+        <p>Locate θ<sub>a</sub> in Table 3.1. For θ<sub>a</sub> between two table entries, apply linear interpolation.</p>
+        <div style="${formulaBlockStyle}">k<sub>y,θ</sub> = ${kOutput}</div>
+        <p><strong>Result:</strong> f<sub>y,θ</sub> = k<sub>y,θ</sub> × f<sub>y</sub> — effective yield strength at this temperature.</p>`;
+    } else {
+      workedExample = '<p>Enter steel temperature (θ<sub>a</sub>) to see worked example.</p>';
     }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>k<sub>y,θ</sub></strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${kOutput}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>-</strong></td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          BS EN 1993-1-2:2005 Table 3.1 — Reduction factor k<sub>y,θ</sub> for yield strength of carbon steel at uniform temperature θ<sub>a</sub>.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          <strong>θ<sub>a</sub></strong> (Steel temperature, °C) = ${theta_val != null ? theta_val : '—'}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Formula</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          k<sub>y,θ</sub> is obtained by linear interpolation from Table 3.1 (θ<sub>a</sub> in °C vs k<sub>y,θ</sub>).
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Conclusion</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          ${k_val != null ? `<strong>k<sub>y,θ</sub> = ${k_val.toFixed(3)}</strong>` : 'Enter steel temperature to see the result.'}
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">STRENGTH REDUCTION FACTOR CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: BS EN 1993-1-2:2005 Table 3.1 — Reduction factor k<sub>y,θ</sub> for yield strength of carbon steel</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

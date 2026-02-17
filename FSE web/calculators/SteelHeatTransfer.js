@@ -247,19 +247,121 @@ const SteelHeatTransferCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
+    const srcId = sourceWindowId || windowId;
     const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'unprotected';
     const isUnprotected = method === 'unprotected';
+    const reportId = `steelheattransfer-report-${windowId}`;
+    const copyBtnId = `steelheattransfer-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    let inputTable = '';
+    let methodology = '';
+    let workedExample = '';
+    const peakTemp = getOutput();
+
+    if (isUnprotected) {
+      const inputLabels = [
+        { id: 1, label: 'Duration', unit: 's' },
+        { id: 2, label: 'Time step', unit: 's' },
+        { id: 3, label: 'Section factor A_m/V', unit: 'm⁻¹' },
+        { id: 4, label: 'Shadow factor k_sh', unit: '-' },
+        { id: 5, label: 'Emissivity ε_m', unit: '-' },
+        { id: 6, label: 'Convection α_c', unit: 'W/m²K' }
+      ];
+      inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+      methodology = `
+        <p><strong>Step 1: Mode — Unprotected steel (Eq. 4.25)</strong></p>
+        <p>Steel member directly exposed to fire. Gas temperature from ISO 834 standard fire curve.</p>
+        <p><strong>Step 2: ISO 834 gas temperature</strong></p>
+        <div style="${formulaBlockStyle}">T_g = 20 + 345 × log₁₀(8t + 1) (°C)</div>
+        <p><em>Convert to Kelvin for heat transfer calculations.</em></p>
+        <p><strong>Step 3: Net heat flux</strong></p>
+        <div style="${formulaBlockStyle}">h_net,c = α_c × (T_g − T_a)</div>
+        <div style="${formulaBlockStyle}">h_net,r = Φ × ε_m × ε_f × σ × (T_g⁴ − T_a⁴)</div>
+        <div style="${formulaBlockStyle}">h_net,d = h_net,c + h_net,r</div>
+        <p><em>Φ = 1, ε_f = 1, σ = 5.67×10⁻⁸ W/m²K⁴</em></p>
+        <p><strong>Step 4: Steel temperature rise (Eq. 4.25)</strong></p>
+        <div style="${formulaBlockStyle}">dθ_a/dt = k_sh × (A_m/V) / (ρ_a × c_a) × h_net,d</div>
+        <p><em>c_a = c_steel(T_a) — temperature-dependent specific heat (BS EN 1993-1-2 Table 3.1).</em></p>`;
+
+      const A_m_V = getVal(3);
+      const k_sh = getVal(4) ?? 1;
+      const hasKey = A_m_V != null && A_m_V > 0;
+      if (hasKey) {
+        workedExample = `
+          <p>Given: A_m/V = ${fmt(A_m_V)} m⁻¹, k_sh = ${fmt(k_sh)}, ε_m = ${fmt(getVal(5) ?? 0.7)}, α_c = ${fmt(getVal(6) ?? 25)} W/m²K</p>
+          <p>At each time step: T_g from ISO 834; h_net,d = convection + radiation; steel temperature integrated via Eq. 4.25.</p>
+          <p><strong>Result:</strong> Peak steel temperature = ${peakTemp} °C</p>`;
+      } else {
+        workedExample = '<p>Enter section factor (A_m/V) and run the calculation to see results.</p>';
+      }
+    } else {
+      const inputLabels = [
+        { id: 1, label: 'Duration', unit: 's' },
+        { id: 2, label: 'Time step', unit: 's' },
+        { id: 3, label: 'Steel area A', unit: 'm²' },
+        { id: 4, label: 'Protection k', unit: 'W/mK' },
+        { id: 5, label: 'Protection ρ', unit: 'kg/m³' },
+        { id: 6, label: 'Protection c', unit: 'J/kgK' },
+        { id: 7, label: 'Protection thickness', unit: 'm' },
+        { id: 8, label: 'Protected perimeter', unit: 'm' }
+      ];
+      inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+      methodology = `
+        <p><strong>Step 1: Mode — Protected steel (Eq. 4.27, Clause 4.2.5.2)</strong></p>
+        <p>Steel member with fire protection. Gas temperature from ISO 834.</p>
+        <p><strong>Step 2: Protection capacity factor</strong></p>
+        <div style="${formulaBlockStyle}">φ = (c_p × ρ_p / c_a × ρ_a) × d_p × A_p / V</div>
+        <p><strong>Step 3: Heat transfer coefficient</strong></p>
+        <div style="${formulaBlockStyle}">a = (λ_p × A_p / V) / (d_p × c_a × ρ_a)</div>
+        <p><strong>Step 4: Temperature rise (Eq. 4.27)</strong></p>
+        <div style="${formulaBlockStyle}">b = (T_g − T_a) / (1 + φ/3)</div>
+        <div style="${formulaBlockStyle}">c = (e^(φ/10) − 1) × (T_g − T_g,prev)</div>
+        <div style="${formulaBlockStyle}">dθ_a/dt = (a × b × Δt − c) / Δt</div>
+        <p><em>If dθ_a/dt &lt; 0 while fire is heating, set dθ_a/dt = 0.</em></p>`;
+
+      const A = getVal(3);
+      const k = getVal(4);
+      const rho = getVal(5);
+      const c = getVal(6);
+      const d = getVal(7);
+      const A_p = getVal(8);
+      const hasKey = A && k && rho && c && d && A_p && A > 0 && k > 0 && rho > 0 && c > 0 && d > 0 && A_p > 0;
+      if (hasKey) {
+        workedExample = `
+          <p>Given: A = ${fmt(A)} m², k = ${fmt(k)} W/mK, ρ = ${fmt(rho)} kg/m³, c = ${fmt(c)} J/kgK, d_p = ${fmt(d)} m, A_p = ${fmt(A_p)} m</p>
+          <p>φ and a are computed; steel temperature integrated via Eq. 4.27 at each time step.</p>
+          <p><strong>Result:</strong> Peak steel temperature = ${peakTemp} °C</p>`;
+      } else {
+        workedExample = '<p>Enter all protection parameters and run the calculation to see results.</p>';
+      }
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Peak Steel Temperature</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${peakTemp}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>°C</strong></td></tr>
+      </table>`;
 
     return `
       <div class="form-calculator help-detail" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          BS EN 1993-1-2:2005 — Steel member temperature rise. Gas temperature: ISO 834 standard fire curve.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          ${isUnprotected ? 'Unprotected steel (Eq. 4.25)' : 'Protected steel (Eq. 4.27, Clauses 4.2.5.2)'}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Results</h4>
+        <h4 style="color: var(--text-primary); margin: 0 0 6px 0; font-size: 14px; font-weight: 600;">Results (Chart &amp; Table)</h4>
         <div class="help-results-section" data-source-window="${sourceWindowId || ''}">
           <div class="calc-chart-container" style="margin: 4px 0 8px 0;">
             <canvas id="help-chart-${windowId}"></canvas>
@@ -271,10 +373,21 @@ const SteelHeatTransferCalculator = {
             </table>
           </div>
         </div>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Inputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          ${isUnprotected ? 'Section factor (A_m/V), shadow factor, emissivity, convection coefficient.' : 'Section area, protection properties (k, ρ, c, thickness), protected perimeter.'}
-        </p>
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary); margin-top: 12px;">
+          <h3 style="margin: 12px 0 4px 0; font-size: 14px;">STEEL HEAT TRANSFER CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: BS EN 1993-1-2:2005 — Unprotected (Eq. 4.25) / Protected (Eq. 4.27, Clause 4.2.5.2). Gas: ISO 834.</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

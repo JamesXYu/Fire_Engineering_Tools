@@ -314,25 +314,109 @@ const DetectorActivationCalculator = {
     `;
   },
 
-  // Required: Get help window HTML
+  // Required: Get help window HTML - Detector Activation Calculation Report
   getHelpHTML(windowId, sourceWindowId) {
+    const srcId = sourceWindowId || windowId;
+    const reportId = `detector-report-${windowId}`;
+    const copyBtnId = `detector-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = (n) => {
+      const el = document.getElementById(`result${n}-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : String(x));
+
+    const inputLabels = [
+      { id: 1, label: 'Duration', unit: 's' },
+      { id: 2, label: 'Time Step', unit: 's' },
+      { id: 3, label: 'Fire Growth Factor (α)', unit: 'kW/s²' },
+      { id: 4, label: 'Height (H)', unit: 'm' },
+      { id: 5, label: 'Radial Distance (R)', unit: 'm' },
+      { id: 6, label: 'Response Time Index (RTI)', unit: '(m·s)½' },
+      { id: 7, label: 'Conduction Factor (C)', unit: '(m/s)½' },
+      { id: 8, label: 'Activation Temperature', unit: '°C' },
+      { id: 9, label: 'Convection HRR', unit: '%' },
+      { id: 10, label: 'HRR Density', unit: 'kW/m²' }
+    ];
+
+    const inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const methodology = `
+      <p><strong>Step 1: Fire Growth (t-squared)</strong></p>
+      <div style="${formulaBlockStyle}">Q̇ = α × t² (kW)</div>
+      <p><strong>Step 2: Fire Diameter</strong></p>
+      <div style="${formulaBlockStyle}">D = 2 × √(Q̇ / (π × HRR_density))</div>
+      <p><strong>Step 3: Virtual Fire Origin</strong></p>
+      <div style="${formulaBlockStyle}">z₀ = -1.02 × D + 0.083 × Q̇^(2/5)</div>
+      <p><strong>Step 4: Regime Selection</strong></p>
+      <ul>
+        <li><strong>Plume:</strong> r/(H − z₀) ≤ 0.246 — use Eq 1 (temperature), Eq 2 (velocity)</li>
+        <li><strong>Jet:</strong> r/(H − z₀) &gt; 0.246 — use Eq 3 (temperature), Eq 4 (velocity)</li>
+      </ul>
+      <p><strong>Equation 1 — Plume temperature</strong> (mean centre-line excess gas temperature):</p>
+      <div style="${formulaBlockStyle}">Δθ = 9.1 × (T₀/(g×cₚ²×ρ²))^(1/3) × Q̇_c^(2/3) × (z−z₀)^(−5/3)</div>
+      <p><strong>Equation 2 — Plume velocity</strong> (mean gas velocity along fire centre-line):</p>
+      <div style="${formulaBlockStyle}">u = 3.4 × (g/(cₚ×ρ×T₀))^(1/3) × Q̇_c^(1/3) × (z−z₀)^(−1/3)</div>
+      <p><strong>Equation 3 — Ceiling jet temperature</strong> (axisymmetric):</p>
+      <div style="${formulaBlockStyle}">Δθ = 6.721 × Q̇_c^(2/3) / (H−z₀)^(5/3) × (r/(H−z₀))^(−0.6545)</div>
+      <p><strong>Equation 4 — Ceiling jet velocity</strong> (axisymmetric):</p>
+      <div style="${formulaBlockStyle}">u = 0.2526 × Q̇_c^(1/3) / (H−z₀)^(1/3) × (r/(H−z₀))^(−1.0739)</div>
+      <p><strong>Step 5: Detector Temperature (Eq 5)</strong></p>
+      <div style="${formulaBlockStyle}">dΔT_e/dt = (u^½/RTI) × [ΔT_g − ΔT_e × (1 + C/u^½)]</div>
+      <p><em>Time-stepped until detector temperature ≥ activation temperature.</em></p>`;
+
+    const activationTime = getOutput(1);
+    const regime = getOutput(2);
+    let workedExample = '';
+
+    const alpha = getVal(3);
+    const H = getVal(4);
+    const R = getVal(5);
+    const hasKeyInputs = alpha != null && H != null && R != null;
+
+    if (hasKeyInputs) {
+      workedExample = `
+        <p>Given: α = ${fmt(alpha)} kW/s², H = ${fmt(H)} m, R = ${fmt(R)} m</p>
+        <p>At each time step: Q̇ = α × t²; D and z₀ are computed; r/(H−z₀) determines Plume vs Jet regime.</p>
+        <p>Detector temperature is integrated until it reaches activation temperature.</p>
+        <p><strong>Result:</strong> Activation Time = ${activationTime} s, Regime = ${regime}</p>`;
+    } else {
+      workedExample = '<p>Enter all required input values and run the calculation to see results.</p>';
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Activation Time</td><td style="padding:6px; border:1px solid var(--window-border);">${activationTime}</td><td style="padding:6px; border:1px solid var(--window-border);">s</td></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Regime</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${regime}</strong></td><td style="padding:6px; border:1px solid var(--window-border);">-</td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          PD 7974-1:2019 — Heat detector activation time using t-squared fire growth. Determines Plume or Jet regime and activation time.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Inputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          Simulation time, time step, fire growth factor (α), ceiling height, detector height, RTI, activation temperature, fire diameter/HRR density, ambient temperature.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Regime</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          The calculator checks whether the detector is in the <strong>Plume</strong> (fire plume) or <strong>Jet</strong> (ceiling jet) regime and uses the appropriate equations.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Outputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          Activation time (s) and regime (Plume or Jet). Reference: PD 7974 Clause 8.9.
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">DETECTOR ACTIVATION CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: PD 7974-1:2019 - Heat detector activation (Clause 8.9)</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

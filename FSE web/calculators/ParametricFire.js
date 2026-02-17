@@ -390,17 +390,145 @@ const ParametricFireCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
+    const srcId = sourceWindowId || windowId;
     const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'BSEN';
     const isBSEN = method === 'BSEN';
+    const reportId = `parametric-report-${windowId}`;
+    const copyBtnId = `parametric-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      if (el?.tagName === 'SELECT') return raw || null;
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    let inputTable = '';
+    let methodology = '';
+    let workedExample = '';
+    const peakTemp = getOutput();
+
+    if (isBSEN) {
+      const inputLabels = [
+        { id: 1, label: 'Duration', unit: 's' },
+        { id: 2, label: 'Time Step', unit: 's' },
+        { id: 3, label: 'Total surface A_t', unit: 'm²' },
+        { id: 4, label: 'Floor area A_f', unit: 'm²' },
+        { id: 5, label: 'Opening area A_v', unit: 'm²' },
+        { id: 6, label: 'Opening height h_eq', unit: 'm' },
+        { id: 7, label: 'Fire load q_fd', unit: 'MJ/m²' },
+        { id: 8, label: 'Lining λ', unit: 'W/mK' },
+        { id: 9, label: 'Lining ρ', unit: 'kg/m³' },
+        { id: 10, label: 'Lining c', unit: 'J/kgK' },
+        { id: 11, label: 'Limiting time t_lim', unit: 's' },
+        { id: 12, label: 'Ambient T_0', unit: '°C' }
+      ];
+      inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+      methodology = `
+        <p><strong>Step 1: Thermal inertia and opening factor</strong></p>
+        <div style="${formulaBlockStyle}">b = √(λ × ρ × c)</div>
+        <div style="${formulaBlockStyle}">O = (A_v × √h_eq) / A_t</div>
+        <p><strong>Step 2: Fire load density and time factor</strong></p>
+        <div style="${formulaBlockStyle}">q_td = (q_fd × A_f) / A_t</div>
+        <div style="${formulaBlockStyle}">Γ = ((O/0.04) / (b/1160))²</div>
+        <div style="${formulaBlockStyle}">t_max_hr = 0.0002 × q_td / O</div>
+        <p><strong>Step 3: Heating phase (Eq 3.12)</strong></p>
+        <div style="${formulaBlockStyle}">t* = Γ × t_hr</div>
+        <div style="${formulaBlockStyle}">T_g = 1325 × (1 − 0.324e^(−0.2t*) − 0.204e^(−1.7t*) − 0.472e^(−19t*)) + T_0</div>
+        <p><strong>Step 4: Cooling phase (Eq 3.16 or 3.22)</strong></p>
+        <ul>
+          <li>t*_max ≤ 0.5: T_g = T_max − 625 × (t* − t*_max)</li>
+          <li>0.5 &lt; t*_max &lt; 2: T_g = T_max − 250 × (3 − t*_max) × (t* − t*_max)</li>
+          <li>t*_max ≥ 2: T_g = T_max − 250 × (t* − t*_max)</li>
+        </ul>
+        <p><em>If t_max &lt; t_lim, Eq 3.22 applies with modified time term.</em></p>`;
+
+      const A_t = getVal(3), A_f = getVal(4), A_v = getVal(5), h_eq = getVal(6), q_fd = getVal(7);
+      const lbd = getVal(8), rho = getVal(9), c = getVal(10);
+      const hasKey = A_t && A_f && A_v && h_eq && q_fd && lbd && rho && c;
+      if (hasKey) {
+        const b = Math.sqrt(lbd * rho * c);
+        const O = (A_v * Math.sqrt(h_eq)) / A_t;
+        const q_td = (q_fd * A_f) / A_t;
+        workedExample = `
+          <p>Given: A_t = ${fmt(A_t)} m², A_f = ${fmt(A_f)} m², A_v = ${fmt(A_v)} m², h_eq = ${fmt(h_eq)} m, q_fd = ${fmt(q_fd)} MJ/m², λ = ${fmt(lbd)}, ρ = ${fmt(rho)}, c = ${fmt(c)}</p>
+          <div style="${formulaBlockStyle}">b = √(λ × ρ × c) = ${fmt(b)}</div>
+          <div style="${formulaBlockStyle}">O = (A_v × √h_eq) / A_t = ${fmt(O)}</div>
+          <div style="${formulaBlockStyle}">q_td = (q_fd × A_f) / A_t = ${fmt(q_td)} MJ/m²</div>
+          <div style="${formulaBlockStyle}">Γ = ((O/0.04) / (b/1160))²</div>
+          <p><strong>Result:</strong> Peak temperature = ${peakTemp} °C</p>`;
+      } else {
+        workedExample = '<p>Enter all required input values and run the calculation to see results.</p>';
+      }
+    } else {
+      const inputLabels = [
+        { id: 1, label: 'Duration', unit: 's' },
+        { id: 2, label: 'Time Step', unit: 's' },
+        { id: 3, label: 'Total surface A_t', unit: 'm²' },
+        { id: 4, label: 'Floor area A_f', unit: 'm²' },
+        { id: 5, label: 'Window area A_w', unit: 'm²' },
+        { id: 6, label: 'Window height h_w', unit: 'm' },
+        { id: 7, label: 'Fire growth t_α', unit: 's' },
+        { id: 8, label: 'Heat storage b', unit: 'J/m²√s/K' },
+        { id: 9, label: 'Fire load q_x,d', unit: 'MJ/m²' },
+        { id: 10, label: 'γ_fi,Q', unit: '-' }
+      ];
+      inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+      methodology = `
+        <p><strong>Step 1: Maximum HRR (AA.1–AA.3)</strong></p>
+        <div style="${formulaBlockStyle}">Q_max_v,k = 1.21 × A_w × √h_w</div>
+        <div style="${formulaBlockStyle}">Q_max_f,k = ρ_Q_dot × A_f</div>
+        <div style="${formulaBlockStyle}">Q_max,k = min(Q_max_f,k, Q_max_v,k)</div>
+        <p><strong>Step 2: Fire type</strong></p>
+        <ul>
+          <li><strong>Ventilation-controlled:</strong> Q_max,k = Q_max_v,k</li>
+          <li><strong>Fuel-controlled:</strong> Q_max,k = Q_max_f,k</li>
+        </ul>
+        <p><strong>Step 3: Time and temperature phases (AA.26–AA.28)</strong></p>
+        <p>Phase 1 (0 → t_1): T = ((T_1 − 20) / t_1²) × t² + 20</p>
+        <p>Phase 2 (t_1 → t_2,x): T = (T_2,x − T_1) × ((t − t_1) / (t_2,x − t_1))^0.5 + T_1</p>
+        <p>Phase 3 (t &gt; t_2,x): T = (T_3,x − T_2,x) × ((t − t_2,x) / (t_3,x − t_2,x))^0.5 + T_2,x</p>
+        <p><em>t_1, t_2,x, t_3,x and T_1, T_2,x, T_3,x from AA.5–AA.28.</em></p>`;
+
+      const A_t = getVal(3), A_f = getVal(4), A_w = getVal(5), h_w = getVal(6), q_x_d = getVal(9);
+      const hasKey = A_t && A_f && A_w && h_w && q_x_d;
+      if (hasKey) {
+        const Q_max_v = 1.21 * A_w * Math.sqrt(h_w);
+        const O = (A_w * Math.sqrt(h_w)) / A_t;
+        workedExample = `
+          <p>Given: A_t = ${fmt(A_t)} m², A_f = ${fmt(A_f)} m², A_w = ${fmt(A_w)} m², h_w = ${fmt(h_w)} m, q_x,d = ${fmt(q_x_d)} MJ/m²</p>
+          <div style="${formulaBlockStyle}">Q_max_v,k = 1.21 × A_w × √h_w = ${fmt(Q_max_v)} MW</div>
+          <div style="${formulaBlockStyle}">O = (A_w × √h_w) / A_t = ${fmt(O)}</div>
+          <p><strong>Result:</strong> Peak temperature = ${peakTemp} °C</p>`;
+      } else {
+        workedExample = '<p>Enter all required input values and run the calculation to see results.</p>';
+      }
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Peak Temperature</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${peakTemp}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>°C</strong></td></tr>
+      </table>`;
+
     const refText = isBSEN
-      ? 'BS EN 1991-1-2 Appendix A — Parametric temperature-time curves (Eurocode 1).'
-      : 'DIN EN 1991-1-2/NA Appendix AA — Simplified natural fire model (German Annex).';
+      ? 'BS EN 1991-1-2 Appendix A — Parametric temperature-time curves (Eurocode 1)'
+      : 'DIN EN 1991-1-2/NA Appendix AA — Simplified natural fire model (German Annex)';
+
     return `
       <div class="form-calculator help-detail" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          ${refText} Compartment gas temperature vs time.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Results</h4>
+        <h4 style="color: var(--text-primary); margin: 0 0 6px 0; font-size: 14px; font-weight: 600;">Results (Chart &amp; Table)</h4>
         <div class="help-results-section" data-source-window="${sourceWindowId || ''}">
           <div class="calc-chart-container" style="margin: 4px 0 8px 0;">
             <canvas id="help-chart-${windowId}"></canvas>
@@ -412,14 +540,21 @@ const ParametricFireCalculator = {
             </table>
           </div>
         </div>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          ${isBSEN ? 'Total/floor area, opening area and height, fire load density, lining properties (λ, ρ, c), heat storage group.' : 'Window area and height, fire growth factor, heat storage (b), design fire load density.'}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Limitations</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          ${isBSEN ? 'q_td typically 50–1000 MJ/m².' : 'Fire load 100–1300 MJ/m², floor area max 400 m², ceiling height max 5 m.'}
-        </p>
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary); margin-top: 12px;">
+          <h3 style="margin: 12px 0 4px 0; font-size: 14px;">PARAMETRIC FIRE CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: ${refText}</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

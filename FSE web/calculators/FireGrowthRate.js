@@ -133,16 +133,102 @@ const FireGrowthRateCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
-    const timeSeries = (this._lastTimeSeriesByWindow || {})[sourceWindowId];
+    const srcId = sourceWindowId || windowId;
     const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'time';
     const isTime = method === 'time';
+    const reportId = `firegrowthrate-report-${windowId}`;
+    const copyBtnId = `firegrowthrate-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    let inputTable = '';
+    let methodology = '';
+    let workedExample = '';
+    const outputVal = getOutput();
+
+    if (isTime) {
+      const inputLabels = [
+        { id: 1, label: 'Time', unit: 's' },
+        { id: 2, label: 'Time step', unit: 's' },
+        { id: 3, label: 'Growth factor α', unit: 'kW/sⁿ' },
+        { id: 4, label: 'Growth power n', unit: '-' }
+      ];
+      inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+      methodology = `
+        <p><strong>Step 1: Mode — Time → HRR</strong></p>
+        <p>Heat release rate vs time. t-squared fire when n = 2.</p>
+        <p><strong>Step 2: Fire growth formula</strong></p>
+        <div style="${formulaBlockStyle}">Q = α × tⁿ</div>
+        <p><em>Q = heat release rate (kW), α = growth factor (kW/sⁿ), t = time (s), n = growth power (n=2 for t-squared).</em></p>
+        <p><strong>Step 3: Time series</strong></p>
+        <p>At each time step t = 0, dt, 2dt, …: Q = α × tⁿ. Peak HRR at t_end.</p>`;
+
+      const t_end = getVal(1);
+      const alpha = getVal(3);
+      const n = getVal(4) ?? 2;
+      const hasKey = t_end != null && alpha != null && alpha > 0;
+      if (hasKey) {
+        const peakHRR = alpha * Math.pow(t_end, n);
+        workedExample = `
+          <p>Given: t = ${fmt(t_end)} s, α = ${fmt(alpha)} kW/sⁿ, n = ${fmt(n)}</p>
+          <div style="${formulaBlockStyle}">Q = α × tⁿ = ${fmt(alpha)} × ${fmt(t_end)}^${fmt(n)} = ${fmt(peakHRR)} kW</div>
+          <p><strong>Result:</strong> Peak HRR = ${outputVal} kW</p>`;
+      } else {
+        workedExample = '<p>Enter time and growth factor (α) to see worked example.</p>';
+      }
+    } else {
+      const inputLabels = [
+        { id: 1, label: 'Heat release rate Q', unit: 'kW' },
+        { id: 2, label: 'Growth factor α', unit: 'kW/sⁿ' },
+        { id: 3, label: 'Growth power n', unit: '-' }
+      ];
+      inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+      methodology = `
+        <p><strong>Step 1: Mode — HRR → Time</strong></p>
+        <p>Time to reach a given heat release rate.</p>
+        <p><strong>Step 2: Invert fire growth formula</strong></p>
+        <div style="${formulaBlockStyle}">Q = α × tⁿ  ⇒  t = (Q / α)^(1/n)</div>
+        <p><em>Solve for t given Q, α, and n.</em></p>`;
+
+      const Q = getVal(1);
+      const alpha = getVal(2);
+      const n = getVal(3) ?? 2;
+      const hasKey = Q != null && alpha != null && Q > 0 && alpha > 0;
+      if (hasKey) {
+        const t = Math.pow(Q / alpha, 1 / n);
+        workedExample = `
+          <p>Given: Q = ${fmt(Q)} kW, α = ${fmt(alpha)} kW/sⁿ, n = ${fmt(n)}</p>
+          <div style="${formulaBlockStyle}">t = (Q/α)^(1/n) = (${fmt(Q)}/${fmt(alpha)})^(1/${fmt(n)}) = ${fmt(t)} s</div>
+          <p><strong>Result:</strong> Time t = ${outputVal} s</p>`;
+      } else {
+        workedExample = '<p>Enter Q and α to see worked example.</p>';
+      }
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>${isTime ? 'Peak HRR' : 'Time t'}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${outputVal}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${isTime ? 'kW' : 's'}</strong></td></tr>
+      </table>`;
 
     return `
       <div class="form-calculator help-detail" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          Fire growth: heat release rate vs time. Two modes: Time → HRR (table and graph) or HRR → Time.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Results</h4>
+        <h4 style="color: var(--text-primary); margin: 0 0 6px 0; font-size: 14px; font-weight: 600;">Results (Chart &amp; Table)</h4>
         <div class="help-results-section" data-source-window="${sourceWindowId || ''}">
           <div class="calc-chart-container" style="margin: 4px 0 8px 0;">
             <canvas id="help-chart-${windowId}"></canvas>
@@ -154,13 +240,21 @@ const FireGrowthRateCalculator = {
             </table>
           </div>
         </div>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Formula</h4>
-        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
-          \\( Q = \\alpha \\times t^n \\) (t-squared when n = 2)
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary); margin-top: 12px;">
+          <h3 style="margin: 12px 0 4px 0; font-size: 14px;">FIRE GROWTH RATE CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: Q = α × tⁿ (t-squared fire when n = 2)</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
         </div>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          <strong>Q</strong> heat release rate (kW), <strong>α</strong> growth factor (kW/sⁿ), <strong>t</strong> time (s), <strong>n</strong> growth power.
-        </p>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

@@ -254,23 +254,126 @@ const TravellingFireCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
+    const srcId = sourceWindowId || windowId;
     const activeMethod = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'temperature';
     const isTemperature = activeMethod === 'temperature';
+    const reportId = `travellingfire-report-${windowId}`;
+    const copyBtnId = `travellingfire-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const inputLabels = [
+      { id: 1, label: 'Duration', unit: 's' },
+      { id: 2, label: 'Time Step', unit: 's' },
+      { id: 3, label: 'Fire Load Density', unit: 'MJ/m²' },
+      { id: 4, label: 'Fire HRR Density', unit: 'MW/m²' },
+      { id: 5, label: 'Room Length', unit: 'm' },
+      { id: 6, label: 'Room Width', unit: 'm' },
+      { id: 7, label: 'Fire Spread Rate', unit: 'm/s' },
+      { id: 8, label: 'Beam Height', unit: 'm' },
+      { id: 9, label: 'Beam Position', unit: 'm' },
+      { id: 10, label: isTemperature ? 'Max Near Field T' : 'Max Near Field Flux', unit: isTemperature ? '°C' : 'kW/m²' }
+    ];
+    const inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const methodology = isTemperature
+      ? `
+        <p><strong>Step 1: Mode — Temperature</strong></p>
+        <p>Peak gas temperature at a structural element during a travelling fire. Alpert correlations.</p>
+        <p><strong>Step 2: Fire phases (HRR)</strong></p>
+        <div style="${formulaBlockStyle}">t_burn = max(q_fd / HRRPUA, 900), t_lim = min(t_burn, L/s), t_decay = max(t_burn, L/s)</div>
+        <div style="${formulaBlockStyle}">Growth: Q = HRRPUA × w × s × t (t &lt; t_lim)</div>
+        <div style="${formulaBlockStyle}">Peak: Q = min(HRRPUA × w × s × t_burn, HRRPUA × w × L)</div>
+        <div style="${formulaBlockStyle}">Decay: Q = peak − (t − t_decay) × w × s × HRRPUA</div>
+        <p><strong>Step 3: Fire position and distance</strong></p>
+        <div style="${formulaBlockStyle}">l_fire_front = s × t, l_fire_end = s × (t − t_lim)</div>
+        <div style="${formulaBlockStyle}">l_fire_median = (l_fire_front + l_fire_end) / 2</div>
+        <div style="${formulaBlockStyle}">r = |l_s − l_fire_median|</div>
+        <p><strong>Step 4: Gas temperature (Alpert)</strong></p>
+        <div style="${formulaBlockStyle}">r/h_s &gt; 0.18: T_g = 5.38 × (Q/r)^(2/3) / h_s + 20</div>
+        <div style="${formulaBlockStyle}">r/h_s ≤ 0.18: T_g = 16.9 × Q^(2/3) / h_s^(5/3) + 20</div>
+        <p><em>T_g capped at max near-field temperature.</em></p>`
+      : `
+        <p><strong>Step 1: Mode — Heat Flux</strong></p>
+        <p>Peak incident heat flux at a structural element. EN 1991-1-2 Annex C.</p>
+        <p><strong>Step 2: Fire phases (same as Temperature)</strong></p>
+        <div style="${formulaBlockStyle}">Q from growth/peak/decay; fire position r from beam.</div>
+        <p><strong>Step 3: Dimensionless parameters</strong></p>
+        <div style="${formulaBlockStyle}">Q*_H = Q / (1.11×10⁶ × h^(5/2))</div>
+        <div style="${formulaBlockStyle}">Q*_D = Q / (1.11×10⁶ × D^(5/2)), D = 2√(fire_area/π)</div>
+        <div style="${formulaBlockStyle}">l_h = max(0, 2.9 × h × Q*_H^0.33 − h)</div>
+        <div style="${formulaBlockStyle}">y = (r + h + z) / (l_h + h + z)</div>
+        <p><strong>Step 4: Incident heat flux</strong></p>
+        <div style="${formulaBlockStyle}">y ≤ 0.5: q_inc = max near-field flux (limit)</div>
+        <div style="${formulaBlockStyle}">0.5 &lt; y ≤ 1: q_inc = 682 × e^(−3.4y)</div>
+        <div style="${formulaBlockStyle}">y &gt; 1: q_inc = 682 × e^(−3.4) × y^(−3.7)</div>
+        <p><em>q_inc capped at max near-field flux.</em></p>`;
+
+    const peakOutput = getOutput();
+    const q_fd = getVal(3);
+    const HRRPUA = getVal(4);
+    const L = getVal(5);
+    const w = getVal(6);
+    const s = getVal(7);
+    const h_s = getVal(8);
+    const l_s = getVal(9);
+    const hasKey = q_fd != null && HRRPUA != null && L != null && w != null && s != null && h_s != null && l_s != null &&
+      q_fd > 0 && HRRPUA > 0 && L > 0 && w > 0 && s > 0 && h_s > 0;
+
+    let workedExample = '';
+    if (hasKey) {
+      const t_burn = Math.max(q_fd / HRRPUA, 900);
+      const t_lim = Math.min(t_burn, L / s);
+      workedExample = `
+        <p>Given: q_fd = ${fmt(q_fd)} MJ/m², HRRPUA = ${fmt(HRRPUA)} MW/m², L = ${fmt(L)} m, w = ${fmt(w)} m, s = ${fmt(s)} m/s, h_s = ${fmt(h_s)} m, l_s = ${fmt(l_s)} m</p>
+        <div style="${formulaBlockStyle}">t_burn = max(${fmt(q_fd)}/${fmt(HRRPUA)}, 900) = ${fmt(t_burn)} s</div>
+        <div style="${formulaBlockStyle}">t_lim = min(t_burn, L/s) = ${fmt(t_lim)} s</div>
+        <p>At each time step: Q from fire phases; r = |l_s − l_fire_median|; ${isTemperature ? 'T_g from Alpert' : 'q_inc from EN 1991-1-2 Annex C'}.</p>
+        <p><strong>Result:</strong> Peak ${isTemperature ? 'Gas Temperature' : 'Incident Heat Flux'} = ${peakOutput} ${isTemperature ? '°C' : 'kW/m²'}</p>`;
+    } else {
+      workedExample = '<p>Enter all required input values and run the calculation to see results.</p>';
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Peak ${isTemperature ? 'Gas Temperature' : 'Incident Heat Flux'}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${peakOutput}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${isTemperature ? '°C' : 'kW/m²'}</strong></td></tr>
+      </table>`;
+
+    const refText = isTemperature
+      ? 'Alpert correlations — Travelling fire gas temperature'
+      : 'EN 1991-1-2 Annex C — Travelling fire incident heat flux';
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          ${isTemperature
-            ? 'Peak gas temperature at a structural element during a travelling fire. Alpert correlations (fse_travelling_fire.py).'
-            : 'Peak incident heat flux at a structural element during a travelling fire. EN 1991-1-2 Annex C (fse_travelling_fire_flux.py).'}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Inputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          Fire load density, HRR density, room length/width, fire spread rate, beam location (height, length), max near-field ${isTemperature ? 'temperature (°C)' : 'flux (kW/m²)'}.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Output</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          Peak ${isTemperature ? 'gas temperature (°C)' : 'incident heat flux (kW/m²)'} at the beam location.
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">TRAVELLING FIRE CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: ${refText}</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

@@ -333,28 +333,127 @@ const ExternalfirespreadCalculator = {
   
   // Required: Get help window HTML
   getHelpHTML(windowId, sourceWindowId) {
-    let activeMethod = '1-4';
-    if (sourceWindowId) activeMethod = this.getActiveMethod(sourceWindowId);
+    const srcId = sourceWindowId || windowId;
+    const activeMethod = sourceWindowId ? this.getActiveMethod(sourceWindowId) : '1-4';
+    const config = this.getMethodConfig(activeMethod);
+    const reportId = `externalfirespread-report-${windowId}`;
+    const copyBtnId = `externalfirespread-copy-${windowId}`;
+
     const methodMap = { '1-4': 'A', '1-5': 'B', '2-4': 'C', '2-5': 'D' };
     const methodLetter = methodMap[activeMethod] || 'A';
-    const [r1, r2] = activeMethod.split('-');
+
+    const getVal = (inputId) => {
+      const el = document.getElementById(`${inputId}-${srcId}`);
+      const raw = el?.value?.trim();
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = (outputId) => {
+      const el = document.getElementById(`${outputId}-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const checkboxChecked = config.hasCheckbox && document.getElementById(`checkbox-${srcId}`)?.checked;
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const unitForInput = (inputId) => {
+      if (inputId === 'input4' || inputId === 'input5') return 'kW/m²';
+      if ((activeMethod === '1-5' || activeMethod === '2-5') && inputId === 'input3') return '%';
+      if (inputId === 'input6') return '°';
+      return 'm';
+    };
+    const fullInputTable = config.inputs
+      .filter(i => !i.disabled || (i.disabled && checkboxChecked))
+      .map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${unitForInput(i.id)}</td></tr>`)
+      .join('') + (config.hasCheckbox ? `<tr><td>Non-centroid</td><td>${checkboxChecked ? 'Yes' : 'No'}</td><td>-</td></tr>` : '');
+
+    let methodology = '';
+    const isParallel = activeMethod === '1-4' || activeMethod === '1-5';
+    const isBoundaryDist = activeMethod === '1-4' || activeMethod === '2-4';
+
+    if (isParallel) {
+      methodology = `
+        <p><strong>Step 1: Mode — Method ${methodLetter} (Parallel)</strong></p>
+        <p>Emitter and receiver facades are parallel. View factor from radiative heat transfer between opposed rectangles.</p>
+        <p><strong>Step 2: View factor (centroid)</strong></p>
+        <div style="${formulaBlockStyle}">x = W / (2d), y = H / (2d)</div>
+        <div style="${formulaBlockStyle}">xx = x/√(1+x²), xy = x/√(1+y²), yy = y/√(1+y²), yx = y/√(1+x²)</div>
+        <div style="${formulaBlockStyle}">VF = 2 × (xx×atan(yx) + yy×atan(xy)) / π</div>
+        <p><em>Non-centroid: VF from corner decomposition with horizontal/vertical offsets.</em></p>
+        <p><strong>Step 3: Receiver heat flux</strong></p>
+        <div style="${formulaBlockStyle}">q_rec = VF × q_emit / 100</div>
+        <p><strong>Step 4: Unprotected area (when given boundary distance)</strong></p>
+        <div style="${formulaBlockStyle}">Unprotected % = min(100, (q_crit / q_rec) × 100)</div>
+        <p><strong>Step 5: Distance (when given unprotected area)</strong></p>
+        <p><em>Binary search to invert VF formula; find d such that resulting q_rec gives target unprotected %.</em></p>`;
+    } else {
+      methodology = `
+        <p><strong>Step 1: Mode — Method ${methodLetter} (Perpendicular)</strong></p>
+        <p>Emitter and receiver facades are perpendicular (angle θ). View factor from corner configuration.</p>
+        <p><strong>Step 2: View factor (centroid, perpendicular)</strong></p>
+        <div style="${formulaBlockStyle}">x = w/d, y = h/d</div>
+        <div style="${formulaBlockStyle}">yy = √(y² + 1)</div>
+        <div style="${formulaBlockStyle}">VF = (atan(x) − atan(x/yy)/yy) / (2π)</div>
+        <p><em>Non-centroid: VF from angled corner decomposition with offsets.</em></p>
+        <p><strong>Step 3: Receiver heat flux</strong></p>
+        <div style="${formulaBlockStyle}">q_rec = VF × q_emit / 100</div>
+        <p><strong>Step 4: Unprotected area / Distance</strong></p>
+        <p><em>Same logic as parallel; distance inverted via binary search when given unprotected %.</em></p>`;
+    }
+
+    const out1 = getOutput('output1');
+    const out2 = getOutput('output2');
+    const out3 = getOutput('output3');
+    const W = getVal('input1');
+    const H = getVal('input2');
+    const input3Val = getVal('input3');
+    const q_emit = getVal('input4');
+    const q_crit = getVal('input5');
+    const hasKey = W != null && H != null && input3Val != null && q_emit != null && q_crit != null && W > 0 && H > 0 && q_emit > 0 && q_crit > 0;
+    const hasKeyDist = isBoundaryDist && hasKey && input3Val > 0;
+    const hasKeyArea = !isBoundaryDist && hasKey;
+
+    let workedExample = '';
+    if (hasKeyDist || hasKeyArea) {
+      const givenStr = isBoundaryDist
+        ? `W = ${fmt(W)} m, H = ${fmt(H)} m, d = ${fmt(input3Val)} m, q_emit = ${fmt(q_emit)} kW/m², q_crit = ${fmt(q_crit)} kW/m²`
+        : `W = ${fmt(W)} m, H = ${fmt(H)} m, Unprotected % = ${fmt(input3Val)}, q_emit = ${fmt(q_emit)} kW/m², q_crit = ${fmt(q_crit)} kW/m²`;
+      workedExample = `
+        <p>Given: ${givenStr}</p>
+        <p>View factor VF is computed from geometry; q_rec = VF × q_emit / 100.</p>
+        <p><strong>Result:</strong> View Factor = ${out1}%, Receiver Heat Flux = ${out2} kW/m², ${config.outputs[2].label} = ${out3} ${config.outputs[2].unit || ''}</p>`;
+    } else {
+      workedExample = '<p>Enter all required input values and run the calculation to see results.</p>';
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">View Factor</td><td style="padding:6px; border:1px solid var(--window-border);">${out1}</td><td style="padding:6px; border:1px solid var(--window-border);">%</td></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Receiver Heat Flux</td><td style="padding:6px; border:1px solid var(--window-border);">${out2}</td><td style="padding:6px; border:1px solid var(--window-border);">kW/m²</td></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>${config.outputs[2].label}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${out3}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${config.outputs[2].unit || ''}</strong></td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          External fire spread — View factor and separation distance calculations between buildings or facades.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          Method ${methodLetter} — Row 1 option ${r1}, Row 2 option ${r2}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          Dimensions (width, height, distance), view factor or separation distance depending on mode.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Output</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          View factor (%) or required separation distance (m) for fire exposure assessment.
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">EXTERNAL FIRE SPREAD CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: View factor and separation distance for fire spread between buildings/facades (Parallel/Perpendicular)</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${fullInputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

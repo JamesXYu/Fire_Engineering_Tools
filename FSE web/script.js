@@ -1,3 +1,6 @@
+// Calculators that have figure images (show pin button)
+const CALCULATORS_WITH_FIGURES = ['mergeflow', 'BSmergeflow', 'Flameheight', 'DetectorActivation', 'FirePlume', 'Externalfirespread'];
+
 // State Management
 const state = {
   windows: [],
@@ -605,7 +608,7 @@ function renderWindows() {
            data-window-id="${window.id}">
         <div class="window-title-bar" data-window-id="${window.id}">
           <div style="display: flex; align-items: center; gap: 8px;">
-            ${window.type.endsWith('-help') || window.type.endsWith('-figure') ? '' : `<button class="figure-btn" data-window-id="${window.id}" title="Show Figure">📍</button>`}
+            ${window.type.endsWith('-help') || window.type.endsWith('-figure') || !CALCULATORS_WITH_FIGURES.includes(window.type) ? '' : `<button class="figure-btn" data-window-id="${window.id}" title="Show Figure">📍</button>`}
             <span class="window-title">${window.title}</span>
           </div>
           <div class="window-controls">
@@ -677,20 +680,11 @@ function attachWindowEvents() {
       if (e.target.closest('button')) return;
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
       
-      // Don't interfere with help window content (text selection, copying, etc.)
-      if (window && window.type === 'mergeflow-help') {
-        // Allow text selection and copying in help windows
-        // Only focus if clicking on empty space (not on text content)
+      // Don't interfere with help window content (text selection, copying, scroll position)
+      if (window && window.type.endsWith('-help')) {
+        // Clicking anywhere in the content area: skip focus to avoid renderWindows() which resets scroll
         if (e.target.closest('.window-content')) {
-          const content = e.target.closest('.window-content');
-          // If clicking on actual content (p, div, span, etc.), don't focus
-          if (e.target.tagName === 'P' || e.target.tagName === 'DIV' || 
-              e.target.tagName === 'SPAN' || e.target.tagName === 'H3' || 
-              e.target.tagName === 'H4' || e.target.closest('p') || 
-              e.target.closest('div') || e.target.closest('span') ||
-              e.target.closest('h3') || e.target.closest('h4')) {
-            return; // Don't focus, allow text selection
-          }
+          return; // Don't focus, allow text selection and preserve scroll position
         }
       }
       

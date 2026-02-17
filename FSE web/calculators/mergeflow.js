@@ -87,83 +87,101 @@ const MergeFlowCalculator = {
     `;
   },
   
-  // Get help window HTML
+  // Get help window HTML - ADB Merge Flow Calculation Report
   getHelpHTML(windowId, sourceWindowId) {
-    let P = 'P', W = 'W', D = 'D';
-    let P_val = null, W_val = null, D_val = null;
-    let effectiveWidth = null;
-    let branch = '';
+    const srcId = sourceWindowId || windowId;
+    const reportId = `mergeflow-report-${windowId}`;
+    const copyBtnId = `mergeflow-copy-${windowId}`;
 
-    if (sourceWindowId) {
-      const peopleEl = document.getElementById(`people-${sourceWindowId}`);
-      const stairEl = document.getElementById(`stair-${sourceWindowId}`);
-      const distanceEl = document.getElementById(`distance-${sourceWindowId}`);
-      P_val = peopleEl && peopleEl.value ? parseFloat(peopleEl.value) : null;
-      W_val = stairEl && stairEl.value ? parseFloat(stairEl.value) : null;
-      D_val = distanceEl && distanceEl.value ? parseFloat(distanceEl.value) : null;
-      if (P_val != null) P = P_val;
-      if (W_val != null) W = W_val;
-      if (D_val != null) D = D_val;
+    const getVal = (id) => {
+      const el = document.getElementById(`${id}-${srcId}`);
+      const v = el ? parseFloat(el.value) : NaN;
+      return isNaN(v) ? null : v;
+    };
+    const getResult = () => {
+      const el = document.getElementById(`effective-width-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 2 }) : String(x));
 
-      if (P_val != null && W_val != null && D_val != null) {
-        const base = ((P_val / 2.5) + (W_val * 0.06)) / 80 * 1000;
-        if (P_val < 60) {
-          effectiveWidth = base;
-          branch = 'Fewer than 60 people — base formula';
-        } else if (D_val >= 2) {
-          effectiveWidth = base;
-          branch = '60+ people, distance ≥ 2 m — base formula';
-        } else {
-          effectiveWidth = Math.max(W_val, base);
-          branch = '60+ people, distance < 2 m — greater of stair width or formula';
-        }
+    const P = getVal('people');
+    const W = getVal('stair');
+    const D = getVal('distance');
+    const hasAll = P != null && W != null && D != null;
+
+    let baseCalc = null;
+    let effectiveWidth = getResult();
+    let ruleApplied = '—';
+    let workedExample = '';
+
+    if (hasAll) {
+      baseCalc = ((P / 2.5) + (W * 0.06)) / 80 * 1000;
+      if (P < 60) {
+        effectiveWidth = baseCalc.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        ruleApplied = 'P < 60 — base formula';
+      } else if (D >= 2) {
+        effectiveWidth = baseCalc.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        ruleApplied = 'P ≥ 60, D ≥ 2 m — base formula';
+      } else {
+        const result = Math.max(W, baseCalc);
+        effectiveWidth = result.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        ruleApplied = 'P ≥ 60, D < 2 m — max(stair width, base formula)';
       }
     }
 
-    const formulaDisplay = P_val != null && W_val != null
-      ? `\\( E = \\frac{(${P}/2.5) + (${W} \\times 0.06)}{80} \\times 1000 \\; \\text{mm} \\)`
-      : `\\( E = \\frac{(P/2.5) + (W \\times 0.06)}{80} \\times 1000 \\; \\text{mm} \\)`;
+    const inputTable = `
+      <tr><td>Number of People (P)</td><td>${fmt(P)}</td><td>persons</td></tr>
+      <tr><td>Stair Width (W)</td><td>${fmt(W)}</td><td>mm</td></tr>
+      <tr><td>Travel Distance (D)</td><td>${fmt(D)}</td><td>m</td></tr>`;
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const methodology = `
+      <p><strong>Step 1: Base Formula</strong></p>
+      <div style="${formulaBlockStyle}">E = [(P/2.5) + (W × 0.06)] / 80 × 1000 mm</div>
+      <p><strong>Step 2: Rule Selection</strong></p>
+      <ul>
+        <li><strong>P &lt; 60:</strong> Effective width = base formula result</li>
+        <li><strong>P ≥ 60 and D ≥ 2 m:</strong> Effective width = base formula result</li>
+        <li><strong>P ≥ 60 and D &lt; 2 m:</strong> Effective width = max(stair width W, base formula result)</li>
+      </ul>`;
+
+    if (hasAll) {
+      const isThirdRule = P >= 60 && D < 2;
+      workedExample = `
+        <p>Given: P = ${fmt(P)}, W = ${fmt(W)} mm, D = ${fmt(D)} m</p>
+        <div style="${formulaBlockStyle}">E = [(${fmt(P)}/2.5) + (${fmt(W)} × 0.06)] / 80 × 1000 = ${fmt(baseCalc)} mm</div>
+        <p>Since ${ruleApplied}:</p>
+        <div style="${formulaBlockStyle}">${isThirdRule ? `Effective width = max(${fmt(W)} mm, ${fmt(baseCalc)} mm) = ${effectiveWidth} mm` : `Effective width = ${effectiveWidth} mm`}</div>`;
+    } else {
+      workedExample = '<p>Enter all input values to see worked example.</p>';
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Calculation Step</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Base Formula Result</td><td style="padding:6px; border:1px solid var(--window-border);">${hasAll ? fmt(baseCalc) : '—'}</td><td style="padding:6px; border:1px solid var(--window-border);">mm</td></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Rule Applied</td><td style="padding:6px; border:1px solid var(--window-border);">${ruleApplied}</td><td style="padding:6px; border:1px solid var(--window-border);">-</td></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Effective Width</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${effectiveWidth}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>mm</strong></td></tr>
+      </table>`;
 
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          ADB Merging Flow (Approved Document B). Effective width is derived from number of people, stair width, and travel distance.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 8px 0; font-size: 13px;">
-          <strong>P</strong> (Number of people) = ${P_val != null ? P_val : '—'}<br>
-          <strong>W</strong> (Stair width, mm) = ${W_val != null ? W_val : '—'}<br>
-          <strong>D</strong> (Distance, m) = ${D_val != null ? D_val : '—'}
-        </p>
-
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Which rule applies</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          <strong>Fewer than 60 people:</strong> Use the base formula.<br>
-          <strong>60 or more people, and travel distance ≥ 2 m:</strong> Use the base formula.<br>
-          <strong>60 or more people, and travel distance &lt; 2 m:</strong> The effective width is the greater of the stair width or the formula result.
-        </p>
-        ${effectiveWidth != null ? `<p style="color: var(--text-primary); line-height: 1.45; margin: 0 0 8px 0; font-size: 13px;"><strong>Applied:</strong> ${branch}</p>` : ''}
-
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Formula</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          Base formula:
-        </p>
-        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
-          \\( E = \\frac{(P/2.5) + (W \\times 0.06)}{80} \\times 1000 \\; \\text{mm} \\)
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">ADB MERGE FLOW CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: Approved Document B</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
         </div>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          With values:
-        </p>
-        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
-          ${formulaDisplay}
-        </div>
-
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 4: Conclusion</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          ${effectiveWidth != null
-            ? `<strong>Effective width = ${effectiveWidth.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} mm</strong>`
-            : 'Enter all inputs to see the result.'}
-        </p>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

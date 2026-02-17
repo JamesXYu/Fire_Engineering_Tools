@@ -308,34 +308,158 @@ const FlameheightCalculator = {
     `;
   },
   
-  // Required: Get help window HTML
+  // Required: Get help window HTML - Flame Height Calculation Report
   getHelpHTML(windowId, sourceWindowId) {
-    let activeMethod = '1';
-    let subMethod = '4';
-    if (sourceWindowId) {
-      activeMethod = this.getActiveMethod(sourceWindowId);
-      subMethod = this.getSubMethod(sourceWindowId);
-    }
+    const srcId = sourceWindowId || windowId;
+    const activeMethod = this.getActiveMethod(srcId);
+    const subMethod = this.getSubMethod(srcId);
     const config = this.getMethodConfig(activeMethod, subMethod);
-    const methodLabels = { '1': 'Circular fire', '2': 'Line fire', '3': 'Rectangular fire' };
-    const methodLabel = methodLabels[activeMethod] || 'Circular fire';
+    const reportId = `flameheight-report-${windowId}`;
+    const copyBtnId = `flameheight-copy-${windowId}`;
+
+    const getVal = (id) => {
+      const el = document.getElementById(`${id}-${srcId}`);
+      if (!el) return null;
+      const raw = el.value?.trim();
+      const input = config.inputs.find(i => i.id === id);
+      if (raw === '' && input?.defaultValue !== undefined) return input.defaultValue;
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = (id) => {
+      const el = document.getElementById(`${id}-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : String(x));
+
+    const Q = getVal('input1');
+    const rho = getVal('input2');
+    const cp = getVal('input3');
+    const T = getVal('input4');
+    const g = getVal('input5');
+    const D = getVal('input6');
+    const L2 = getVal('input7');
+
+    const hasCommon = Q != null && rho != null && cp != null && T != null && g != null;
+    const hasAll = activeMethod === '1' ? (hasCommon && D != null) : activeMethod === '2' ? (hasCommon && D != null) : (hasCommon && D != null && L2 != null);
+
+    let inputTable = '';
+    let methodology = '';
+    let workedExample = '';
+    let qStar = '—';
+    let flameHeight = getOutput('output2');
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const subLabels = { '4': 'Natural Gas', '5': 'Wood Cribs', '6': 'Gas Liquids Solids' };
+    const methodLabels = { '1': 'Circular', '2': 'Line', '3': 'Rectangular' };
+
+    if (activeMethod === '1') {
+      inputTable = config.inputs.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.id === 'input1' ? 'kW' : i.id === 'input2' ? 'kg/m³' : i.id === 'input3' ? 'kJ/(kg K)' : i.id === 'input4' ? 'K' : i.id === 'input5' ? 'm/s²' : 'm'}</td></tr>`).join('');
+      methodology = `
+        <p><strong>Step 1: Dimensionless HRR (Circular)</strong></p>
+        <div style="${formulaBlockStyle}">Q* = Q / (ρ × cₚ × T × √g × D²·⁵)</div>
+        <p><strong>Step 2: Flame Height (${subLabels[subMethod] || '—'})</strong></p>
+        ${subMethod === '4' ? `
+        <div style="${formulaBlockStyle}">Q* &lt; 0.15: H_f = Q*² × 40 × D</div>
+        <div style="${formulaBlockStyle}">0.15 ≤ Q* &lt; 1: H_f = Q*²/³ × 3.3 × D</div>
+        <div style="${formulaBlockStyle}">1 ≤ Q* &lt; 40: H_f = Q*²/⁵ × 3.3 × D</div>
+        <div style="${formulaBlockStyle}">Q* ≥ 40: N/A</div>` : subMethod === '5' ? `
+        <div style="${formulaBlockStyle}">0.75 &lt; Q* &lt; 8.8: H_f = Q*⁰·⁶¹ × 3.4 × D</div>
+        <div style="${formulaBlockStyle}">Else: N/A</div>` : subMethod === '6' ? `
+        <div style="${formulaBlockStyle}">0.12 &lt; Q* &lt; 12000: H_f = (Q*⁰·⁴ × 3.7 − 1.02) × D</div>
+        <div style="${formulaBlockStyle}">Else: N/A</div>` : ''}`;
+
+      if (hasAll) {
+        const qStarVal = Q / (rho * cp * T * Math.sqrt(g) * Math.pow(D, 2.5));
+        qStar = fmt(qStarVal);
+        let hCalc = null;
+        if (subMethod === '4') {
+          if (qStarVal < 0.15) hCalc = Math.pow(qStarVal, 2) * 40 * D;
+          else if (qStarVal < 1) hCalc = Math.pow(qStarVal, 2/3) * 3.3 * D;
+          else if (qStarVal < 40) hCalc = Math.pow(qStarVal, 2/5) * 3.3 * D;
+        } else if (subMethod === '5' && qStarVal > 0.75 && qStarVal < 8.8) {
+          hCalc = Math.pow(qStarVal, 0.61) * 3.4 * D;
+        } else if (subMethod === '6' && qStarVal > 0.12 && qStarVal < 12000) {
+          hCalc = (Math.pow(qStarVal, 0.4) * 3.7 - 1.02) * D;
+        }
+        flameHeight = hCalc != null ? fmt(hCalc) : getOutput('output2');
+        workedExample = `
+        <p>Given: Q = ${fmt(Q)} kW, ρ = ${fmt(rho)} kg/m³, cₚ = ${fmt(cp)}, T = ${fmt(T)} K, g = ${fmt(g)} m/s², D = ${fmt(D)} m</p>
+        <div style="${formulaBlockStyle}">Q* = ${fmt(Q)} / (${fmt(rho)} × ${fmt(cp)} × ${fmt(T)} × √${fmt(g)} × ${fmt(D)}²·⁵) = ${qStar}</div>
+        <div style="${formulaBlockStyle}">H_f = ${flameHeight} m</div>`;
+      } else {
+        workedExample = '<p>Enter all input values to see worked example.</p>';
+      }
+    } else if (activeMethod === '2') {
+      inputTable = config.inputs.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.id === 'input6' ? 'm' : i.id === 'input1' ? 'kW' : i.id === 'input2' ? 'kg/m³' : i.id === 'input3' ? 'kJ/(kg K)' : i.id === 'input4' ? 'K' : 'm/s²'}</td></tr>`).join('');
+      methodology = `
+        <p><strong>Step 1: Dimensionless HRR (Line fire)</strong></p>
+        <div style="${formulaBlockStyle}">Q* = Q / (ρ × cₚ × T × √g × L¹·⁵)</div>
+        <p><strong>Step 2: Flame Height</strong></p>
+        <div style="${formulaBlockStyle}">H_f = 3.46 × Q* × L</div>`;
+
+      if (hasAll) {
+        const qStarVal = Q / (rho * cp * T * Math.sqrt(g) * Math.pow(D, 1.5));
+        qStar = fmt(qStarVal);
+        const hCalc = 3.46 * qStarVal * D;
+        flameHeight = fmt(hCalc);
+        workedExample = `
+        <p>Given: Q = ${fmt(Q)} kW, ρ = ${fmt(rho)} kg/m³, cₚ = ${fmt(cp)}, T = ${fmt(T)} K, g = ${fmt(g)} m/s², L = ${fmt(D)} m</p>
+        <div style="${formulaBlockStyle}">Q* = ${fmt(Q)} / (${fmt(rho)} × ${fmt(cp)} × ${fmt(T)} × √${fmt(g)} × ${fmt(D)}¹·⁵) = ${qStar}</div>
+        <div style="${formulaBlockStyle}">H_f = 3.46 × ${qStar} × ${fmt(D)} = ${flameHeight} m</div>`;
+      } else {
+        workedExample = '<p>Enter all input values to see worked example.</p>';
+      }
+    } else {
+      inputTable = config.inputs.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.id === 'input6' || i.id === 'input7' ? 'm' : i.id === 'input1' ? 'kW' : i.id === 'input2' ? 'kg/m³' : i.id === 'input3' ? 'kJ/(kg K)' : i.id === 'input4' ? 'K' : 'm/s²'}</td></tr>`).join('');
+      methodology = `
+        <p><strong>Step 1: Dimensionless HRR (Rectangular, L &gt; W)</strong></p>
+        <div style="${formulaBlockStyle}">Q* = Q / (ρ × cₚ × T × √g × W¹·⁵ × L)</div>
+        <p><strong>Step 2: Flame Height</strong></p>
+        <div style="${formulaBlockStyle}">H_f = 3.46 × Q* × L</div>
+        <p><em>Requires L (long) &gt; W (short).</em></p>`;
+
+      if (hasAll && D > L2) {
+        const qStarVal = Q / (rho * cp * T * Math.sqrt(g) * Math.pow(L2, 1.5) * D);
+        qStar = fmt(qStarVal);
+        const hCalc = 3.46 * qStarVal * D;
+        flameHeight = fmt(hCalc);
+        workedExample = `
+        <p>Given: Q = ${fmt(Q)} kW, ρ = ${fmt(rho)}, cₚ = ${fmt(cp)}, T = ${fmt(T)} K, g = ${fmt(g)} m/s², L = ${fmt(D)} m, W = ${fmt(L2)} m</p>
+        <div style="${formulaBlockStyle}">Q* = ${fmt(Q)} / (${fmt(rho)} × ${fmt(cp)} × ${fmt(T)} × √${fmt(g)} × ${fmt(L2)}¹·⁵ × ${fmt(D)}) = ${qStar}</div>
+        <div style="${formulaBlockStyle}">H_f = 3.46 × ${qStar} × ${fmt(D)} = ${flameHeight} m</div>`;
+      } else if (hasAll && D <= L2) {
+        workedExample = '<p>Long dimension must be greater than short dimension. Swap L and W.</p>';
+      } else {
+        workedExample = '<p>Enter all input values to see worked example.</p>';
+      }
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Calculation Step</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr><td style="padding:6px; border:1px solid var(--window-border);">Dimensionless HRR (Q*)</td><td style="padding:6px; border:1px solid var(--window-border);">${qStar}</td><td style="padding:6px; border:1px solid var(--window-border);">-</td></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Flame Height</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${flameHeight}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>m</strong></td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          PD 7974 — Flame height for various fire geometries. Dimensionless HRR correlations (McCaffrey/Heskestad-type).
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          ${methodLabel}${activeMethod === '1' ? ` (${(config.dropdownOptions || []).find(o => o.value === subMethod)?.label || '—'})` : ''}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          ${config.inputs.map(input => input.label).join(', ')}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Outputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          ${config.outputs.map(o => `${o.label} (${o.unit})`).join(', ')}
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">FLAME HEIGHT CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: PD 7974 - Dimensionless HRR correlations</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

@@ -120,35 +120,106 @@ const StefanBoltzmannCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
-    let T2 = null, epsilon = null, T1_or_P = null, result_val = null;
+    const srcId = sourceWindowId || windowId;
     const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'temperature';
     const isTemp = method === 'temperature';
-    if (sourceWindowId) {
-      const g = (id) => document.getElementById(`${id}-${sourceWindowId}`);
-      T2 = g('input1')?.value ? parseFloat(g('input1').value) : null;
-      epsilon = g('input2')?.value ? parseFloat(g('input2').value) : null;
-      T1_or_P = g('input3')?.value ? parseFloat(g('input3').value) : null;
-      result_val = g('result')?.value ? parseFloat(g('result').value) : null;
+    const reportId = `stefanboltzmann-report-${windowId}`;
+    const copyBtnId = `stefanboltzmann-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const inputLabels = isTemp
+      ? [
+          { id: 1, label: 'Ambient T₂', unit: '°C' },
+          { id: 2, label: 'Emissivity ε', unit: '-' },
+          { id: 3, label: 'Surface T₁', unit: '°C' }
+        ]
+      : [
+          { id: 1, label: 'Ambient T₂', unit: '°C' },
+          { id: 2, label: 'Emissivity ε', unit: '-' },
+          { id: 3, label: 'Heat flux P', unit: 'kW/m²' }
+        ];
+    const inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+    const methodology = `
+      <p><strong>Step 1: Stefan-Boltzmann law</strong></p>
+      <p>Radiative heat flux between two surfaces at different temperatures.</p>
+      <p><strong>Step 2: Formula</strong></p>
+      <div style="${formulaBlockStyle}">P = ε × σ × (T₁⁴ − T₂⁴)</div>
+      <p><em>P = heat flux (W/m²), ε = emissivity, σ = 5.670374×10⁻⁸ W/(m²·K⁴), T₁ and T₂ in Kelvin.</em></p>
+      <p><strong>Step 3: Temperature conversion</strong></p>
+      <div style="${formulaBlockStyle}">T (K) = T (°C) + 273.15</div>
+      <p><strong>Step 4: Output</strong></p>
+      <p><em>Temperature mode: P (kW/m²) = result / 1000. Heat flux mode: T₁⁴ = P/(ε×σ) + T₂⁴, solve for T₁.</em></p>`;
+
+    const T2 = getVal(1) ?? 20;
+    const epsilon = getVal(2) ?? 1;
+    const T1_or_P = getVal(3);
+    const outputVal = getOutput();
+
+    let workedExample = '';
+    if (isTemp && T1_or_P != null) {
+      const T1_K = T1_or_P + 273.15;
+      const T2_K = T2 + 273.15;
+      const P_W = epsilon * 5.670374419e-8 * (Math.pow(T1_K, 4) - Math.pow(T2_K, 4));
+      const P_kW = P_W / 1000;
+      workedExample = `
+        <p>Given: T₂ = ${fmt(T2)} °C, ε = ${fmt(epsilon)}, T₁ = ${fmt(T1_or_P)} °C</p>
+        <div style="${formulaBlockStyle}">T₁ = ${fmt(T1_or_P)} + 273.15 = ${fmt(T1_K)} K</div>
+        <div style="${formulaBlockStyle}">T₂ = ${fmt(T2)} + 273.15 = ${fmt(T2_K)} K</div>
+        <div style="${formulaBlockStyle}">P = ε × σ × (T₁⁴ − T₂⁴) = ${fmt(P_kW)} kW/m²</div>
+        <p><strong>Result:</strong> Heat flux P = ${outputVal} kW/m²</p>`;
+    } else if (!isTemp && T1_or_P != null && T1_or_P >= 0) {
+      const P_W = T1_or_P * 1000;
+      const T2_K = T2 + 273.15;
+      const T1_4 = P_W / (epsilon * 5.670374419e-8) + Math.pow(T2_K, 4);
+      const T1_K = Math.pow(T1_4, 0.25);
+      const T1_C = T1_K - 273.15;
+      workedExample = `
+        <p>Given: T₂ = ${fmt(T2)} °C, ε = ${fmt(epsilon)}, P = ${fmt(T1_or_P)} kW/m²</p>
+        <div style="${formulaBlockStyle}">P = ε × σ × (T₁⁴ − T₂⁴)  ⇒  T₁⁴ = P/(ε×σ) + T₂⁴</div>
+        <div style="${formulaBlockStyle}">T₁ = ${fmt(T1_C)} °C</div>
+        <p><strong>Result:</strong> Surface T₁ = ${outputVal} °C</p>`;
+    } else {
+      workedExample = '<p>Enter all input values to see worked example.</p>';
     }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>${isTemp ? 'Heat flux P' : 'Surface T₁'}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${outputVal}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${isTemp ? 'kW/m²' : '°C'}</strong></td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          Radiative heat flux between two surfaces. P = emissivity × σ × (T₁⁴ − T₂⁴). σ = 5.67×10⁻⁸ W/(m²·K⁴).
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Input data</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          <strong>T₂</strong> (Ambient, °C) = ${T2 != null ? T2 : '—'}<br>
-          <strong>ε</strong> (Emissivity) = ${epsilon != null ? epsilon : '—'}<br>
-          <strong>${isTemp ? 'T₁' : 'P'}</strong> (${isTemp ? 'Hot surface temp, °C' : 'Heat flux, kW/m²'}) = ${T1_or_P != null ? T1_or_P : '—'}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Formula</h4>
-        <div style="text-align: center; margin: 4px 0 8px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px;">
-          \\( P = \\varepsilon \\times \\sigma \\times (T_1^4 - T_2^4) \\)
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">STEFAN-BOLTZMANN LAW CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: P = ε × σ × (T₁⁴ − T₂⁴), σ = 5.670374×10⁻⁸ W/(m²·K⁴)</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
         </div>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Conclusion</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          ${result_val != null ? `<strong>${isTemp ? 'Heat flux' : 'Temperature'} = ${result_val.toFixed(isTemp ? 2 : 1)} ${isTemp ? 'kW/m²' : '°C'}</strong>` : 'Enter all inputs to see the result.'}
-        </p>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },

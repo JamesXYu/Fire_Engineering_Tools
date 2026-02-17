@@ -196,25 +196,140 @@ const ExternalSteelCalculator = {
   },
 
   getHelpHTML(windowId, sourceWindowId) {
+    const srcId = sourceWindowId || windowId;
     const method = sourceWindowId ? this.getActiveMethod(sourceWindowId) : 'column';
     const isColumn = method === 'column';
+    const reportId = `externalsteel-report-${windowId}`;
+    const copyBtnId = `externalsteel-copy-${windowId}`;
+
+    const getVal = (n) => {
+      const el = document.getElementById(`input${n}-${srcId}`);
+      const raw = el?.value?.trim();
+      if (el?.tagName === 'SELECT') return raw || null;
+      const v = parseFloat(raw);
+      return isNaN(v) ? null : v;
+    };
+    const getOutput = () => {
+      const el = document.getElementById(`result-${srcId}`);
+      return el && el.value ? el.value : '—';
+    };
+    const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
+
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+
+    const inputLabels = isColumn
+      ? [
+          { id: 12, label: 'Forced draught', unit: '-' },
+          { id: 1, label: 'Flame temperature T_z', unit: 'K' },
+          { id: 2, label: 'Opening temperature T_o', unit: 'K' },
+          { id: 3, label: 'Distance d_1', unit: 'm' },
+          { id: 4, label: 'Distance d_2', unit: 'm' },
+          { id: 5, label: 'Window width w_t', unit: 'm' },
+          { id: 6, label: 'Equivalent height h_eq', unit: 'm' },
+          { id: 7, label: 'Horizontal length L_H', unit: 'm' },
+          { id: 8, label: 'Vertical length L_L', unit: 'm' },
+          { id: 9, label: 'Flame thickness λ_1', unit: 'm' },
+          { id: 10, label: 'Flame thickness λ_3', unit: 'm' },
+          { id: 11, label: 'Convection coefficient α', unit: 'W/m²K' }
+        ]
+      : [
+          { id: 12, label: 'Forced draught', unit: '-' },
+          { id: 1, label: 'Flame temperature T_z', unit: 'K' },
+          { id: 2, label: 'Opening temperature T_o', unit: 'K' },
+          { id: 3, label: 'Distance d_1', unit: 'm' },
+          { id: 4, label: 'Distance d_2', unit: 'm' },
+          { id: 5, label: 'Window width w_t', unit: 'm' },
+          { id: 6, label: 'Equivalent height h_eq', unit: 'm' },
+          { id: 7, label: 'Horizontal length L_H', unit: 'm' },
+          { id: 8, label: 'Vertical length L_L', unit: 'm' },
+          { id: 9, label: 'Distance d_aw', unit: 'm' },
+          { id: 10, label: 'Flame thickness λ_4', unit: 'm' },
+          { id: 11, label: 'Convection coefficient α', unit: 'W/m²K' }
+        ];
+
+    const inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
+
+    const methodology = isColumn
+      ? `
+        <p><strong>Step 1: Mode — Column (Clause B.4)</strong></p>
+        <p>External steel column fully or partially engulfed in flame.</p>
+        <p><strong>Step 2: Temperature conversion</strong></p>
+        <div style="${formulaBlockStyle}">T_z,C = T_z − 273.15 (°C)</div>
+        <div style="${formulaBlockStyle}">T_o,C = T_o − 273.15 (°C)</div>
+        <p><strong>Step 3: Member temperature (simplified approximation)</strong></p>
+        <div style="${formulaBlockStyle}">T_m = 0.7 × T_z,C + 0.3 × T_o,C</div>
+        <p><em>Weighted combination of flame and opening temperatures. Full BS EN 1993-1-2 Annex B uses view factors, emissivities (I_z, I_f), and configuration factors for improved accuracy.</em></p>`
+      : `
+        <p><strong>Step 1: Mode — Beam (Clause B.5)</strong></p>
+        <p>External steel beam fully or partially engulfed in flame.</p>
+        <p><strong>Step 2: Average flame temperature</strong></p>
+        <div style="${formulaBlockStyle}">T_z,avg = (T_z,1 + T_z,2) / 2</div>
+        <p><em>T_z,1 = flame temp at upper level, T_z,2 = flame temp at lower level.</em></p>
+        <p><strong>Step 3: Temperature conversion</strong></p>
+        <div style="${formulaBlockStyle}">T_z,C = T_z,avg − 273.15 (°C)</div>
+        <div style="${formulaBlockStyle}">T_o,C = T_o − 273.15 (°C)</div>
+        <p><strong>Step 4: Member temperature (simplified approximation)</strong></p>
+        <div style="${formulaBlockStyle}">T_m = 0.7 × T_z,C + 0.3 × T_o,C</div>
+        <p><em>Weighted combination of flame and opening temperatures. Full Annex B uses view factors and emissivities.</em></p>`;
+
+    const T_z = getVal(1);
+    const T_o = getVal(2);
+    const memberTemp = getOutput();
+    let workedExample = '';
+
+    if (T_z != null && T_o != null && T_z >= 273 && T_o >= 273) {
+      if (isColumn) {
+        const T_z_C = T_z - 273.15;
+        const T_o_C = T_o - 273.15;
+        const T_m_C = 0.7 * T_z_C + 0.3 * T_o_C;
+        workedExample = `
+          <p>Given: T_z = ${fmt(T_z)} K, T_o = ${fmt(T_o)} K</p>
+          <div style="${formulaBlockStyle}">T_z,C = ${fmt(T_z)} − 273.15 = ${fmt(T_z_C)} °C</div>
+          <div style="${formulaBlockStyle}">T_o,C = ${fmt(T_o)} − 273.15 = ${fmt(T_o_C)} °C</div>
+          <div style="${formulaBlockStyle}">T_m = 0.7 × ${fmt(T_z_C)} + 0.3 × ${fmt(T_o_C)} = ${fmt(T_m_C)} °C</div>
+          <p><strong>Result:</strong> Member temperature = ${memberTemp} °C</p>`;
+      } else {
+        const T_z_2 = T_z * 0.9;
+        const T_z_avg = (T_z + T_z_2) / 2;
+        const T_z_C = T_z_avg - 273.15;
+        const T_o_C = T_o - 273.15;
+        const T_m_C = 0.7 * T_z_C + 0.3 * T_o_C;
+        workedExample = `
+          <p>Given: T_z,1 = ${fmt(T_z)} K, T_z,2 = 0.9 × T_z = ${fmt(T_z_2)} K, T_o = ${fmt(T_o)} K</p>
+          <div style="${formulaBlockStyle}">T_z,avg = (${fmt(T_z)} + ${fmt(T_z_2)}) / 2 = ${fmt(T_z_avg)} K</div>
+          <div style="${formulaBlockStyle}">T_z,C = ${fmt(T_z_avg)} − 273.15 = ${fmt(T_z_C)} °C</div>
+          <div style="${formulaBlockStyle}">T_o,C = ${fmt(T_o)} − 273.15 = ${fmt(T_o_C)} °C</div>
+          <div style="${formulaBlockStyle}">T_m = 0.7 × ${fmt(T_z_C)} + 0.3 × ${fmt(T_o_C)} = ${fmt(T_m_C)} °C</div>
+          <p><strong>Result:</strong> Member temperature = ${memberTemp} °C</p>`;
+      }
+    } else {
+      workedExample = '<p>Enter flame temperature (T_z) and opening temperature (T_o) to see worked example.</p>';
+    }
+
+    const resultsTable = `
+      <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Results Summary</h4>
+      <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px;">
+        <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Output</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+        <tr style="background:var(--button-hover);"><td style="padding:6px; border:1px solid var(--window-border);"><strong>Member Temperature (T_m)</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>${memberTemp}</strong></td><td style="padding:6px; border:1px solid var(--window-border);"><strong>°C</strong></td></tr>
+      </table>`;
+
     return `
-      <div class="form-calculator" id="help-${windowId}" style="padding: 4px 0; gap: 4px;">
-        <p style="color: var(--text-secondary); line-height: 1.3; margin: 0; font-size: 13px;">
-          BS EN 1993-1-2 Annex B — Temperature of external steel members (column or beam) fully or partially engulfed in flame. Uses a simplified approximation; full accuracy requires complete Annex B (view factors, emissivities, etc.).
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 1px 0; font-size: 14px; font-weight: 600;">Step 1: Mode</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          ${isColumn ? 'Column (Clause B.4)' : 'Beam (Clause B.5)'}
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 2: Inputs</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0 0 4px 0; font-size: 13px;">
-          Flame temperature, opening temperature, distances (d₁, d₂), window width, equivalent height, horizontal and vertical flame lengths, flame thickness (λ), convection coefficient, forced draught.
-        </p>
-        <h4 style="color: var(--text-primary); margin: 0 0 2px 0; font-size: 14px; font-weight: 600;">Step 3: Output</h4>
-        <p style="color: var(--text-secondary); line-height: 1.45; margin: 0; font-size: 13px;">
-          Member temperature T<sub>m</sub> (°C) — weighted combination of flame and opening temperatures.
-        </p>
+      <div class="form-calculator window-content-help" id="help-${windowId}" style="padding: 8px 12px; gap: 4px;">
+        <div id="${reportId}" style="font-size: 12px; line-height: 1.4; color: var(--text-primary);">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px;">EXTERNAL STEEL TEMPERATURE CALCULATION REPORT</h3>
+          <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--text-secondary);">Reference: BS EN 1993-1-2 Annex B — External steel members (column B.4, beam B.5)</p>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Input Parameters</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+            <tr style="background:var(--button-hover);"><th style="text-align:left; padding:6px; border:1px solid var(--window-border);">Parameter</th><th style="padding:6px; border:1px solid var(--window-border);">Value</th><th style="padding:6px; border:1px solid var(--window-border);">Unit</th></tr>
+            ${inputTable}
+          </table>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Calculation Methodology</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${methodology}</div>
+          <h4 style="color: var(--text-primary); margin: 12px 0 6px 0; font-size: 13px; font-weight: 600;">Worked Example</h4>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">${workedExample}</div>
+          ${resultsTable}
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;"><button id="${copyBtnId}" class="action-btn" style="padding: 6px 14px; background: var(--primary-color); color: white;" onclick="var r=document.getElementById('${reportId}');var b=event.target;if(r&&navigator.clipboard)navigator.clipboard.writeText(r.innerText||r.textContent).then(function(){b.textContent='Copied!';setTimeout(function(){b.textContent='Copy Report to Clipboard';},2000);});">Copy Report to Clipboard</button></div>
       </div>
     `;
   },
