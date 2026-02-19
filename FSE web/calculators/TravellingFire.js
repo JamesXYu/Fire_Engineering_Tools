@@ -286,24 +286,34 @@ const TravellingFireCalculator = {
     ];
     const inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const methodology = isTemperature
       ? `
         <p><strong>Step 1: Mode — Temperature</strong></p>
         <p>Peak gas temperature at a structural element during a travelling fire. Alpert correlations.</p>
         <p><strong>Step 2: Fire phases (HRR)</strong></p>
-        <div style="${formulaBlockStyle}">t_burn = max(q_fd / HRRPUA, 900), t_lim = min(t_burn, L/s), t_decay = max(t_burn, L/s)</div>
-        <div style="${formulaBlockStyle}">Growth: Q = HRRPUA × w × s × t (t &lt; t_lim)</div>
-        <div style="${formulaBlockStyle}">Peak: Q = min(HRRPUA × w × s × t_burn, HRRPUA × w × L)</div>
-        <div style="${formulaBlockStyle}">Decay: Q = peak − (t − t_decay) × w × s × HRRPUA</div>
+        <div style="${formulaBlockStyle}">${renderMath('t_{burn} = \\max(q_{fd}/\\text{HRRPUA}, 900), \\quad t_{lim} = \\min(t_{burn}, L/s), \\quad t_{decay} = \\max(t_{burn}, L/s)')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{Growth: } Q = \\text{HRRPUA} \\times w \\times s \\times t \\quad (t < t_{lim})')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{Peak: } Q = \\min(\\text{HRRPUA} \\times w \\times s \\times t_{burn}, \\text{HRRPUA} \\times w \\times L)')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{Decay: } Q = \\text{peak} - (t - t_{decay}) \\times w \\times s \\times \\text{HRRPUA}')}</div>
         <p><strong>Step 3: Fire position and distance</strong></p>
-        <div style="${formulaBlockStyle}">l_fire_front = s × t, l_fire_end = s × (t − t_lim)</div>
-        <div style="${formulaBlockStyle}">l_fire_median = (l_fire_front + l_fire_end) / 2</div>
-        <div style="${formulaBlockStyle}">r = |l_s − l_fire_median|</div>
+        <div style="${formulaBlockStyle}">${renderMath('l_{fire,front} = s \\times t, \\quad l_{fire,end} = s \\times (t - t_{lim})')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('l_{fire,median} = \\frac{l_{fire,front} + l_{fire,end}}{2}, \\quad r = |l_s - l_{fire,median}|')}</div>
         <p><strong>Step 4: Gas temperature (Alpert)</strong></p>
-        <div style="${formulaBlockStyle}">r/h_s &gt; 0.18: T_g = 5.38 × (Q/r)^(2/3) / h_s + 20</div>
-        <div style="${formulaBlockStyle}">r/h_s ≤ 0.18: T_g = 16.9 × Q^(2/3) / h_s^(5/3) + 20</div>
+        <div style="${formulaBlockStyle}">${renderMath('r/h_s > 0.18: \\quad T_g = 5.38 \\times \\frac{(Q/r)^{2/3}}{h_s} + 20')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('r/h_s \\leq 0.18: \\quad T_g = 16.9 \\times \\frac{Q^{2/3}}{h_s^{5/3}} + 20')}</div>
         <p><em>T_g capped at max near-field temperature.</em></p>`
       : `
         <p><strong>Step 1: Mode — Heat Flux</strong></p>
@@ -311,14 +321,12 @@ const TravellingFireCalculator = {
         <p><strong>Step 2: Fire phases (same as Temperature)</strong></p>
         <div style="${formulaBlockStyle}">Q from growth/peak/decay; fire position r from beam.</div>
         <p><strong>Step 3: Dimensionless parameters</strong></p>
-        <div style="${formulaBlockStyle}">Q*_H = Q / (1.11×10⁶ × h^(5/2))</div>
-        <div style="${formulaBlockStyle}">Q*_D = Q / (1.11×10⁶ × D^(5/2)), D = 2√(fire_area/π)</div>
-        <div style="${formulaBlockStyle}">l_h = max(0, 2.9 × h × Q*_H^0.33 − h)</div>
-        <div style="${formulaBlockStyle}">y = (r + h + z) / (l_h + h + z)</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q^*_H = \\frac{Q}{1.11 \\times 10^6 \\times h^{5/2}}, \\quad Q^*_D = \\frac{Q}{1.11 \\times 10^6 \\times D^{5/2}}, \\quad D = 2\\sqrt{\\text{fire\\_area}/\\pi}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('l_h = \\max(0, 2.9 \\times h \\times (Q^*_H)^{0.33} - h), \\quad y = \\frac{r + h + z}{l_h + h + z}')}</div>
         <p><strong>Step 4: Incident heat flux</strong></p>
-        <div style="${formulaBlockStyle}">y ≤ 0.5: q_inc = max near-field flux (limit)</div>
-        <div style="${formulaBlockStyle}">0.5 &lt; y ≤ 1: q_inc = 682 × e^(−3.4y)</div>
-        <div style="${formulaBlockStyle}">y &gt; 1: q_inc = 682 × e^(−3.4) × y^(−3.7)</div>
+        <div style="${formulaBlockStyle}">${renderMath('y \\leq 0.5: \\quad q_{inc} = \\text{max near-field flux (limit)}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('0.5 < y \\leq 1: \\quad q_{inc} = 682 \\times e^{-3.4y}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('y > 1: \\quad q_{inc} = 682 \\times e^{-3.4} \\times y^{-3.7}')}</div>
         <p><em>q_inc capped at max near-field flux.</em></p>`;
 
     const peakOutput = getOutput();
@@ -338,8 +346,8 @@ const TravellingFireCalculator = {
       const t_lim = Math.min(t_burn, L / s);
       workedExample = `
         <p>Given: q_fd = ${fmt(q_fd)} MJ/m², HRRPUA = ${fmt(HRRPUA)} MW/m², L = ${fmt(L)} m, w = ${fmt(w)} m, s = ${fmt(s)} m/s, h_s = ${fmt(h_s)} m, l_s = ${fmt(l_s)} m</p>
-        <div style="${formulaBlockStyle}">t_burn = max(${fmt(q_fd)}/${fmt(HRRPUA)}, 900) = ${fmt(t_burn)} s</div>
-        <div style="${formulaBlockStyle}">t_lim = min(t_burn, L/s) = ${fmt(t_lim)} s</div>
+        <div style="${formulaBlockStyle}">${renderMath(`t_{burn} = \\max(${fmt(q_fd)}/${fmt(HRRPUA)}, 900) = ${fmt(t_burn)} \\text{ s}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`t_{lim} = \\min(t_{burn}, L/s) = ${fmt(t_lim)} \\text{ s}`)}</div>
         <p>At each time step: Q from fire phases; r = |l_s − l_fire_median|; ${isTemperature ? 'T_g from Alpert' : 'q_inc from EN 1991-1-2 Annex C'}.</p>
         <p><strong>Result:</strong> Peak ${isTemperature ? 'Gas Temperature' : 'Incident Heat Flux'} = ${peakOutput} ${isTemperature ? '°C' : 'kW/m²'}</p>`;
     } else {

@@ -409,7 +409,18 @@ const ParametricFireCalculator = {
     };
     const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     let inputTable = '';
     let methodology = '';
@@ -435,15 +446,15 @@ const ParametricFireCalculator = {
 
       methodology = `
         <p><strong>Step 1: Thermal inertia and opening factor</strong></p>
-        <div style="${formulaBlockStyle}">b = √(λ × ρ × c)</div>
-        <div style="${formulaBlockStyle}">O = (A_v × √h_eq) / A_t</div>
+        <div style="${formulaBlockStyle}">${renderMath('b = \\sqrt{\\lambda \\times \\rho \\times c}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('O = \\frac{A_v \\times \\sqrt{h_{eq}}}{A_t}')}</div>
         <p><strong>Step 2: Fire load density and time factor</strong></p>
-        <div style="${formulaBlockStyle}">q_td = (q_fd × A_f) / A_t</div>
-        <div style="${formulaBlockStyle}">Γ = ((O/0.04) / (b/1160))²</div>
-        <div style="${formulaBlockStyle}">t_max_hr = 0.0002 × q_td / O</div>
+        <div style="${formulaBlockStyle}">${renderMath('q_{td} = \\frac{q_{fd} \\times A_f}{A_t}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\Gamma = \\left(\\frac{O/0.04}{b/1160}\\right)^2')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('t_{max,hr} = 0.0002 \\times \\frac{q_{td}}{O}')}</div>
         <p><strong>Step 3: Heating phase (Eq 3.12)</strong></p>
-        <div style="${formulaBlockStyle}">t* = Γ × t_hr</div>
-        <div style="${formulaBlockStyle}">T_g = 1325 × (1 − 0.324e^(−0.2t*) − 0.204e^(−1.7t*) − 0.472e^(−19t*)) + T_0</div>
+        <div style="${formulaBlockStyle}">${renderMath('t^* = \\Gamma \\times t_{hr}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_g = 1325 \\times (1 - 0.324e^{-0.2t^*} - 0.204e^{-1.7t^*} - 0.472e^{-19t^*}) + T_0')}</div>
         <p><strong>Step 4: Cooling phase (Eq 3.16 or 3.22)</strong></p>
         <ul>
           <li>t*_max ≤ 0.5: T_g = T_max − 625 × (t* − t*_max)</li>
@@ -461,10 +472,10 @@ const ParametricFireCalculator = {
         const q_td = (q_fd * A_f) / A_t;
         workedExample = `
           <p>Given: A_t = ${fmt(A_t)} m², A_f = ${fmt(A_f)} m², A_v = ${fmt(A_v)} m², h_eq = ${fmt(h_eq)} m, q_fd = ${fmt(q_fd)} MJ/m², λ = ${fmt(lbd)}, ρ = ${fmt(rho)}, c = ${fmt(c)}</p>
-          <div style="${formulaBlockStyle}">b = √(λ × ρ × c) = ${fmt(b)}</div>
-          <div style="${formulaBlockStyle}">O = (A_v × √h_eq) / A_t = ${fmt(O)}</div>
-          <div style="${formulaBlockStyle}">q_td = (q_fd × A_f) / A_t = ${fmt(q_td)} MJ/m²</div>
-          <div style="${formulaBlockStyle}">Γ = ((O/0.04) / (b/1160))²</div>
+          <div style="${formulaBlockStyle}">${renderMath(`b = \\sqrt{\\lambda \\times \\rho \\times c} = ${fmt(b)}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`O = \\frac{A_v \\times \\sqrt{h_{eq}}}{A_t} = ${fmt(O)}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`q_{td} = \\frac{q_{fd} \\times A_f}{A_t} = ${fmt(q_td)} \\text{ MJ/m}^2`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath('\\Gamma = \\left(\\frac{O/0.04}{b/1160}\\right)^2')}</div>
           <p><strong>Result:</strong> Peak temperature = ${peakTemp} °C</p>`;
       } else {
         workedExample = '<p>Enter all required input values and run the calculation to see results.</p>';
@@ -486,9 +497,9 @@ const ParametricFireCalculator = {
 
       methodology = `
         <p><strong>Step 1: Maximum HRR (AA.1–AA.3)</strong></p>
-        <div style="${formulaBlockStyle}">Q_max_v,k = 1.21 × A_w × √h_w</div>
-        <div style="${formulaBlockStyle}">Q_max_f,k = ρ_Q_dot × A_f</div>
-        <div style="${formulaBlockStyle}">Q_max,k = min(Q_max_f,k, Q_max_v,k)</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q_{max,v,k} = 1.21 \\times A_w \\times \\sqrt{h_w}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q_{max,f,k} = \\rho_{\\dot{Q}} \\times A_f')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q_{max,k} = \\min(Q_{max,f,k}, Q_{max,v,k})')}</div>
         <p><strong>Step 2: Fire type</strong></p>
         <ul>
           <li><strong>Ventilation-controlled:</strong> Q_max,k = Q_max_v,k</li>
@@ -507,8 +518,8 @@ const ParametricFireCalculator = {
         const O = (A_w * Math.sqrt(h_w)) / A_t;
         workedExample = `
           <p>Given: A_t = ${fmt(A_t)} m², A_f = ${fmt(A_f)} m², A_w = ${fmt(A_w)} m², h_w = ${fmt(h_w)} m, q_x,d = ${fmt(q_x_d)} MJ/m²</p>
-          <div style="${formulaBlockStyle}">Q_max_v,k = 1.21 × A_w × √h_w = ${fmt(Q_max_v)} MW</div>
-          <div style="${formulaBlockStyle}">O = (A_w × √h_w) / A_t = ${fmt(O)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`Q_{max,v,k} = 1.21 \\times A_w \\times \\sqrt{h_w} = ${fmt(Q_max_v)} \\text{ MW}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`O = \\frac{A_w \\times \\sqrt{h_w}}{A_t} = ${fmt(O)}`)}</div>
           <p><strong>Result:</strong> Peak temperature = ${peakTemp} °C</p>`;
       } else {
         workedExample = '<p>Enter all required input values and run the calculation to see results.</p>';

@@ -215,7 +215,18 @@ const ExternalSteelCalculator = {
     };
     const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const inputLabels = isColumn
       ? [
@@ -254,22 +265,22 @@ const ExternalSteelCalculator = {
         <p><strong>Step 1: Mode — Column (Clause B.4)</strong></p>
         <p>External steel column fully or partially engulfed in flame.</p>
         <p><strong>Step 2: Temperature conversion</strong></p>
-        <div style="${formulaBlockStyle}">T_z,C = T_z − 273.15 (°C)</div>
-        <div style="${formulaBlockStyle}">T_o,C = T_o − 273.15 (°C)</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_{z,C} = T_z - 273.15 \\text{ (°C)}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_{o,C} = T_o - 273.15 \\text{ (°C)}')}</div>
         <p><strong>Step 3: Member temperature (simplified approximation)</strong></p>
-        <div style="${formulaBlockStyle}">T_m = 0.7 × T_z,C + 0.3 × T_o,C</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_m = 0.7 \\times T_{z,C} + 0.3 \\times T_{o,C}')}</div>
         <p><em>Weighted combination of flame and opening temperatures. Full BS EN 1993-1-2 Annex B uses view factors, emissivities (I_z, I_f), and configuration factors for improved accuracy.</em></p>`
       : `
         <p><strong>Step 1: Mode — Beam (Clause B.5)</strong></p>
         <p>External steel beam fully or partially engulfed in flame.</p>
         <p><strong>Step 2: Average flame temperature</strong></p>
-        <div style="${formulaBlockStyle}">T_z,avg = (T_z,1 + T_z,2) / 2</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_{z,avg} = \\frac{T_{z,1} + T_{z,2}}{2}')}</div>
         <p><em>T_z,1 = flame temp at upper level, T_z,2 = flame temp at lower level.</em></p>
         <p><strong>Step 3: Temperature conversion</strong></p>
-        <div style="${formulaBlockStyle}">T_z,C = T_z,avg − 273.15 (°C)</div>
-        <div style="${formulaBlockStyle}">T_o,C = T_o − 273.15 (°C)</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_{z,C} = T_{z,avg} - 273.15 \\text{ (°C)}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_{o,C} = T_o - 273.15 \\text{ (°C)}')}</div>
         <p><strong>Step 4: Member temperature (simplified approximation)</strong></p>
-        <div style="${formulaBlockStyle}">T_m = 0.7 × T_z,C + 0.3 × T_o,C</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_m = 0.7 \\times T_{z,C} + 0.3 \\times T_{o,C}')}</div>
         <p><em>Weighted combination of flame and opening temperatures. Full Annex B uses view factors and emissivities.</em></p>`;
 
     const T_z = getVal(1);
@@ -284,9 +295,9 @@ const ExternalSteelCalculator = {
         const T_m_C = 0.7 * T_z_C + 0.3 * T_o_C;
         workedExample = `
           <p>Given: T_z = ${fmt(T_z)} K, T_o = ${fmt(T_o)} K</p>
-          <div style="${formulaBlockStyle}">T_z,C = ${fmt(T_z)} − 273.15 = ${fmt(T_z_C)} °C</div>
-          <div style="${formulaBlockStyle}">T_o,C = ${fmt(T_o)} − 273.15 = ${fmt(T_o_C)} °C</div>
-          <div style="${formulaBlockStyle}">T_m = 0.7 × ${fmt(T_z_C)} + 0.3 × ${fmt(T_o_C)} = ${fmt(T_m_C)} °C</div>
+          <div style="${formulaBlockStyle}">${renderMath(`T_{z,C} = ${fmt(T_z)} - 273.15 = ${fmt(T_z_C)} \\text{ °C}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`T_{o,C} = ${fmt(T_o)} - 273.15 = ${fmt(T_o_C)} \\text{ °C}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`T_m = 0.7 \\times ${fmt(T_z_C)} + 0.3 \\times ${fmt(T_o_C)} = ${fmt(T_m_C)} \\text{ °C}`)}</div>
           <p><strong>Result:</strong> Member temperature = ${memberTemp} °C</p>`;
       } else {
         const T_z_2 = T_z * 0.9;
@@ -296,10 +307,10 @@ const ExternalSteelCalculator = {
         const T_m_C = 0.7 * T_z_C + 0.3 * T_o_C;
         workedExample = `
           <p>Given: T_z,1 = ${fmt(T_z)} K, T_z,2 = 0.9 × T_z = ${fmt(T_z_2)} K, T_o = ${fmt(T_o)} K</p>
-          <div style="${formulaBlockStyle}">T_z,avg = (${fmt(T_z)} + ${fmt(T_z_2)}) / 2 = ${fmt(T_z_avg)} K</div>
-          <div style="${formulaBlockStyle}">T_z,C = ${fmt(T_z_avg)} − 273.15 = ${fmt(T_z_C)} °C</div>
-          <div style="${formulaBlockStyle}">T_o,C = ${fmt(T_o)} − 273.15 = ${fmt(T_o_C)} °C</div>
-          <div style="${formulaBlockStyle}">T_m = 0.7 × ${fmt(T_z_C)} + 0.3 × ${fmt(T_o_C)} = ${fmt(T_m_C)} °C</div>
+          <div style="${formulaBlockStyle}">${renderMath(`T_{z,avg} = \\frac{${fmt(T_z)} + ${fmt(T_z_2)}}{2} = ${fmt(T_z_avg)} \\text{ K}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`T_{z,C} = ${fmt(T_z_avg)} - 273.15 = ${fmt(T_z_C)} \\text{ °C}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`T_{o,C} = ${fmt(T_o)} - 273.15 = ${fmt(T_o_C)} \\text{ °C}`)}</div>
+          <div style="${formulaBlockStyle}">${renderMath(`T_m = 0.7 \\times ${fmt(T_z_C)} + 0.3 \\times ${fmt(T_o_C)} = ${fmt(T_m_C)} \\text{ °C}`)}</div>
           <p><strong>Result:</strong> Member temperature = ${memberTemp} °C</p>`;
       }
     } else {

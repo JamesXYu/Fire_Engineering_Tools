@@ -93,17 +93,28 @@ const StrengthReductionFactorCalculator = {
     const inputTable = `
       <tr><td>Steel temperature θ<sub>a</sub></td><td>${fmt(theta_a)}</td><td>°C</td></tr>`;
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const methodology = `
       <p><strong>Step 1: Table 3.1 — Reduction factor for yield strength</strong></p>
       <p>k<sub>y,θ</sub> = f<sub>y,θ</sub> / f<sub>y</sub> — ratio of yield strength at temperature θ<sub>a</sub> to yield strength at 20°C.</p>
       <p><strong>Step 2: Table values (BS EN 1993-1-2 Table 3.1)</strong></p>
-      <div style="${formulaBlockStyle}">θ<sub>a</sub> (°C): 20, 100, 200, 300, 400 → k<sub>y,θ</sub> = 1.000</div>
-      <div style="${formulaBlockStyle}">500 → 0.780; 600 → 0.470; 700 → 0.230; 800 → 0.110; 900 → 0.060</div>
-      <div style="${formulaBlockStyle}">1000 → 0.040; 1100 → 0.020; 1200 → 0.000</div>
+      <div style="${formulaBlockStyle}">${renderMath('\\theta_a \\text{ (°C): } 20, 100, 200, 300, 400 \\Rightarrow k_{y,\\theta} = 1.000')}</div>
+      <div style="${formulaBlockStyle}">${renderMath('500 \\rightarrow 0.780; \\quad 600 \\rightarrow 0.470; \\quad 700 \\rightarrow 0.230; \\quad 800 \\rightarrow 0.110; \\quad 900 \\rightarrow 0.060')}</div>
+      <div style="${formulaBlockStyle}">${renderMath('1000 \\rightarrow 0.040; \\quad 1100 \\rightarrow 0.020; \\quad 1200 \\rightarrow 0.000')}</div>
       <p><strong>Step 3: Linear interpolation</strong></p>
-      <div style="${formulaBlockStyle}">For θ<sub>a</sub> between t₀ and t₁: k<sub>y,θ</sub> = k₀ + (k₁ − k₀) × (θ<sub>a</sub> − t₀) / (t₁ − t₀)</div>
+      <div style="${formulaBlockStyle}">${renderMath('\\text{For } \\theta_a \\text{ between } t_0 \\text{ and } t_1: \\quad k_{y,\\theta} = k_0 + (k_1 - k_0) \\times \\frac{\\theta_a - t_0}{t_1 - t_0}')}</div>
       <p><em>θ<sub>a</sub> ≤ 20°C: k<sub>y,θ</sub> = 1.0; θ<sub>a</sub> ≥ 1200°C: k<sub>y,θ</sub> = 0.0</em></p>`;
 
     let workedExample = '';
@@ -111,7 +122,7 @@ const StrengthReductionFactorCalculator = {
       workedExample = `
         <p>Given: θ<sub>a</sub> = ${fmt(theta_a)} °C</p>
         <p>Locate θ<sub>a</sub> in Table 3.1. For θ<sub>a</sub> between two table entries, apply linear interpolation.</p>
-        <div style="${formulaBlockStyle}">k<sub>y,θ</sub> = ${kOutput}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`k_{y,\\theta} = ${kOutput}`)}</div>
         <p><strong>Result:</strong> f<sub>y,θ</sub> = k<sub>y,θ</sub> × f<sub>y</sub> — effective yield strength at this temperature.</p>`;
     } else {
       workedExample = '<p>Enter steel temperature (θ<sub>a</sub>) to see worked example.</p>';

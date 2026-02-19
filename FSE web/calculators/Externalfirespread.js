@@ -356,7 +356,18 @@ const ExternalfirespreadCalculator = {
 
     const checkboxChecked = config.hasCheckbox && document.getElementById(`checkbox-${srcId}`)?.checked;
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const unitForInput = (inputId) => {
       if (inputId === 'input4' || inputId === 'input5') return 'kW/m²';
@@ -378,14 +389,14 @@ const ExternalfirespreadCalculator = {
         <p><strong>Step 1: Mode — Method ${methodLetter} (Parallel)</strong></p>
         <p>Emitter and receiver facades are parallel. View factor from radiative heat transfer between opposed rectangles.</p>
         <p><strong>Step 2: View factor (centroid)</strong></p>
-        <div style="${formulaBlockStyle}">x = W / (2d), y = H / (2d)</div>
-        <div style="${formulaBlockStyle}">xx = x/√(1+x²), xy = x/√(1+y²), yy = y/√(1+y²), yx = y/√(1+x²)</div>
-        <div style="${formulaBlockStyle}">VF = 2 × (xx×atan(yx) + yy×atan(xy)) / π</div>
+        <div style="${formulaBlockStyle}">${renderMath('x = \\frac{W}{2d}, \\quad y = \\frac{H}{2d}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('xx = \\frac{x}{\\sqrt{1+x^2}}, \\quad xy = \\frac{x}{\\sqrt{1+y^2}}, \\quad yy = \\frac{y}{\\sqrt{1+y^2}}, \\quad yx = \\frac{y}{\\sqrt{1+x^2}}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{VF} = \\frac{2 \\times (xx \\cdot \\arctan(yx) + yy \\cdot \\arctan(xy))}{\\pi}')}</div>
         <p><em>Non-centroid: VF from corner decomposition with horizontal/vertical offsets.</em></p>
         <p><strong>Step 3: Receiver heat flux</strong></p>
-        <div style="${formulaBlockStyle}">q_rec = VF × q_emit / 100</div>
+        <div style="${formulaBlockStyle}">${renderMath('q_{rec} = \\text{VF} \\times q_{emit} / 100')}</div>
         <p><strong>Step 4: Unprotected area (when given boundary distance)</strong></p>
-        <div style="${formulaBlockStyle}">Unprotected % = min(100, (q_crit / q_rec) × 100)</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{Unprotected } \\% = \\min(100, (q_{crit} / q_{rec}) \\times 100)')}</div>
         <p><strong>Step 5: Distance (when given unprotected area)</strong></p>
         <p><em>Binary search to invert VF formula; find d such that resulting q_rec gives target unprotected %.</em></p>`;
     } else {
@@ -393,12 +404,12 @@ const ExternalfirespreadCalculator = {
         <p><strong>Step 1: Mode — Method ${methodLetter} (Perpendicular)</strong></p>
         <p>Emitter and receiver facades are perpendicular (angle θ). View factor from corner configuration.</p>
         <p><strong>Step 2: View factor (centroid, perpendicular)</strong></p>
-        <div style="${formulaBlockStyle}">x = w/d, y = h/d</div>
-        <div style="${formulaBlockStyle}">yy = √(y² + 1)</div>
-        <div style="${formulaBlockStyle}">VF = (atan(x) − atan(x/yy)/yy) / (2π)</div>
+        <div style="${formulaBlockStyle}">${renderMath('x = w/d, \\quad y = h/d')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('yy = \\sqrt{y^2 + 1}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{VF} = \\frac{\\arctan(x) - \\arctan(x/yy)/yy}{2\\pi}')}</div>
         <p><em>Non-centroid: VF from angled corner decomposition with offsets.</em></p>
         <p><strong>Step 3: Receiver heat flux</strong></p>
-        <div style="${formulaBlockStyle}">q_rec = VF × q_emit / 100</div>
+        <div style="${formulaBlockStyle}">${renderMath('q_{rec} = \\text{VF} \\times q_{emit} / 100')}</div>
         <p><strong>Step 4: Unprotected area / Distance</strong></p>
         <p><em>Same logic as parallel; distance inverted via binary search when given unprotected %.</em></p>`;
     }

@@ -151,23 +151,34 @@ const FirePlumeCalculator = {
       <tr><td>HRR Density</td><td>${fmt(Qdd)}</td><td>kW/m²</td></tr>
       <tr><td>Ambient Temperature (T₀)</td><td>${fmt(T0)}</td><td>K</td></tr>`;
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const methodology = `
       <p><strong>Step 1: Region Selection</strong></p>
       <p>z / Q̇_c^(2/5) determines the plume region:</p>
-      <div style="${formulaBlockStyle}">z / Q̇_c^0.4 &lt; 0.08 → Flame (region 0)</div>
-      <div style="${formulaBlockStyle}">0.08 ≤ z / Q̇_c^0.4 ≤ 0.2 → Intermittent (region 1)</div>
-      <div style="${formulaBlockStyle}">z / Q̇_c^0.4 &gt; 0.2 → Plume (region 2)</div>
+      <div style="${formulaBlockStyle}">${renderMath('z / \\dot{Q}_c^{0.4} < 0.08 \\Rightarrow \\text{Flame (region 0)}')}</div>
+      <div style="${formulaBlockStyle}">${renderMath('0.08 \\leq z / \\dot{Q}_c^{0.4} \\leq 0.2 \\Rightarrow \\text{Intermittent (region 1)}')}</div>
+      <div style="${formulaBlockStyle}">${renderMath('z / \\dot{Q}_c^{0.4} > 0.2 \\Rightarrow \\text{Plume (region 2)}')}</div>
       <p><strong>Step 2: Centre-Line Temperature Rise</strong></p>
       <p>Region-specific coefficients (k, ν): Flame k=6.8 ν=½; Intermittent k=1.9 ν=0; Plume k=1.1 ν=−⅓</p>
-      <div style="${formulaBlockStyle}">ΔT = (k²/C² × (z/Q̇_c^(2/5))^(2ν−1) × T₀) / (2g)</div>
+      <div style="${formulaBlockStyle}">${renderMath('\\Delta T = \\frac{k^2}{C^2} \\cdot \\left(\\frac{z}{\\dot{Q}_c^{2/5}}\\right)^{2\\nu-1} \\cdot \\frac{T_0}{2g}')}</div>
       <p><em>C = 0.9, g = 9.81 m/s²</em></p>
       <p><strong>Step 3: Virtual Fire Origin (PD 7974 Eq 10)</strong></p>
-      <div style="${formulaBlockStyle}">z₀ = -1.02 × D + 0.083 × Q̇^(2/5)</div>
-      <p><em>D = 2 × √(Q̇_c / (π × HRR_density))</em></p>
+      <div style="${formulaBlockStyle}">${renderMath('z_0 = -1.02 \\times D + 0.083 \\times \\dot{Q}^{2/5}')}</div>
+      <p><em>${renderMath('D = 2 \\times \\sqrt{\\dot{Q}_c / (\\pi \\times \\text{HRR}_{\\text{density}})}')}</em></p>
       <p><strong>Step 4: Visible Plume Diameter (SFPE Eq 51.54)</strong></p>
-      <div style="${formulaBlockStyle}">d = 0.48 × √(T_c/T₀) × (z − z₀)</div>
+      <div style="${formulaBlockStyle}">${renderMath('d = 0.48 \\times \\sqrt{T_c/T_0} \\times (z - z_0)')}</div>
       <p><em>T_c = T₀ + ΔT. Only when z &gt; z₀.</em></p>`;
 
     let tempRise = getOutput(1);
@@ -199,10 +210,10 @@ const FirePlumeCalculator = {
 
       workedExample = `
         <p>Given: Q̇_c = ${fmt(Q)} kW, z = ${fmt(z)} m, HRR_density = ${fmt(Qdd)} kW/m², T₀ = ${fmt(T0)} K</p>
-        <div style="${formulaBlockStyle}">z / Q̇_c^0.4 = ${fmt(z)} / ${fmt(Math.pow(Q, 0.4))} = ${fmt(zQFactor)} → Region: ${region}</div>
-        <div style="${formulaBlockStyle}">ΔT = ${tempRise} K</div>
-        <p>D = 2√(${fmt(Q)}/(π×${fmt(Qdd)})) = ${fmt(D)} m; z₀ = ${fmt(z0)} m</p>
-        <div style="${formulaBlockStyle}">Plume diameter = 0.48 × √(${fmt(Tc)}/${fmt(T0)}) × (${fmt(z)} − ${fmt(z0)}) = ${diameter} m</div>`;
+        <div style="${formulaBlockStyle}">${renderMath(`z / \\dot{Q}_c^{0.4} = ${fmt(z)} / ${fmt(Math.pow(Q, 0.4))} = ${fmt(zQFactor)} \\Rightarrow \\text{Region: } ${region}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`\\Delta T = ${tempRise} \\text{ K}`)}</div>
+        <p>${renderMath(`D = 2\\sqrt{${fmt(Q)}/(\\pi \\times ${fmt(Qdd)})} = ${fmt(D)} \\text{ m}; \\quad z_0 = ${fmt(z0)} \\text{ m}`)}</p>
+        <div style="${formulaBlockStyle}">${renderMath(`\\text{Plume diameter} = 0.48 \\times \\sqrt{${fmt(Tc)}/${fmt(T0)}} \\times (${fmt(z)} - ${fmt(z0)}) = ${diameter} \\text{ m}`)}</div>`;
     } else {
       workedExample = '<p>Enter all input values (Q̇_c, z, HRR density) to see worked example.</p>';
     }

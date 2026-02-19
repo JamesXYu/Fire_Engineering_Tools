@@ -138,7 +138,18 @@ const StefanBoltzmannCalculator = {
     };
     const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const inputLabels = isTemp
       ? [
@@ -157,10 +168,10 @@ const StefanBoltzmannCalculator = {
       <p><strong>Step 1: Stefan-Boltzmann law</strong></p>
       <p>Radiative heat flux between two surfaces at different temperatures.</p>
       <p><strong>Step 2: Formula</strong></p>
-      <div style="${formulaBlockStyle}">P = ε × σ × (T₁⁴ − T₂⁴)</div>
+      <div style="${formulaBlockStyle}">${renderMath('P = \\varepsilon \\times \\sigma \\times (T_1^4 - T_2^4)')}</div>
       <p><em>P = heat flux (W/m²), ε = emissivity, σ = 5.670374×10⁻⁸ W/(m²·K⁴), T₁ and T₂ in Kelvin.</em></p>
       <p><strong>Step 3: Temperature conversion</strong></p>
-      <div style="${formulaBlockStyle}">T (K) = T (°C) + 273.15</div>
+      <div style="${formulaBlockStyle}">${renderMath('T \\text{ (K)} = T \\text{ (°C)} + 273.15')}</div>
       <p><strong>Step 4: Output</strong></p>
       <p><em>Temperature mode: P (kW/m²) = result / 1000. Heat flux mode: T₁⁴ = P/(ε×σ) + T₂⁴, solve for T₁.</em></p>`;
 
@@ -177,9 +188,9 @@ const StefanBoltzmannCalculator = {
       const P_kW = P_W / 1000;
       workedExample = `
         <p>Given: T₂ = ${fmt(T2)} °C, ε = ${fmt(epsilon)}, T₁ = ${fmt(T1_or_P)} °C</p>
-        <div style="${formulaBlockStyle}">T₁ = ${fmt(T1_or_P)} + 273.15 = ${fmt(T1_K)} K</div>
-        <div style="${formulaBlockStyle}">T₂ = ${fmt(T2)} + 273.15 = ${fmt(T2_K)} K</div>
-        <div style="${formulaBlockStyle}">P = ε × σ × (T₁⁴ − T₂⁴) = ${fmt(P_kW)} kW/m²</div>
+        <div style="${formulaBlockStyle}">${renderMath(`T_1 = ${fmt(T1_or_P)} + 273.15 = ${fmt(T1_K)} \\text{ K}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`T_2 = ${fmt(T2)} + 273.15 = ${fmt(T2_K)} \\text{ K}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`P = \\varepsilon \\times \\sigma \\times (T_1^4 - T_2^4) = ${fmt(P_kW)} \\text{ kW/m}^2`)}</div>
         <p><strong>Result:</strong> Heat flux P = ${outputVal} kW/m²</p>`;
     } else if (!isTemp && T1_or_P != null && T1_or_P >= 0) {
       const P_W = T1_or_P * 1000;
@@ -189,8 +200,8 @@ const StefanBoltzmannCalculator = {
       const T1_C = T1_K - 273.15;
       workedExample = `
         <p>Given: T₂ = ${fmt(T2)} °C, ε = ${fmt(epsilon)}, P = ${fmt(T1_or_P)} kW/m²</p>
-        <div style="${formulaBlockStyle}">P = ε × σ × (T₁⁴ − T₂⁴)  ⇒  T₁⁴ = P/(ε×σ) + T₂⁴</div>
-        <div style="${formulaBlockStyle}">T₁ = ${fmt(T1_C)} °C</div>
+        <div style="${formulaBlockStyle}">${renderMath('P = \\varepsilon \\times \\sigma \\times (T_1^4 - T_2^4) \\Rightarrow T_1^4 = P/(\\varepsilon \\times \\sigma) + T_2^4')}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`T_1 = ${fmt(T1_C)} \\text{ °C}`)}</div>
         <p><strong>Result:</strong> Surface T₁ = ${outputVal} °C</p>`;
     } else {
       workedExample = '<p>Enter all input values to see worked example.</p>';

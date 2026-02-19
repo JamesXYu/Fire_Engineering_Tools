@@ -347,30 +347,41 @@ const DetectorActivationCalculator = {
 
     const inputTable = inputLabels.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.unit}</td></tr>`).join('');
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const methodology = `
       <p><strong>Step 1: Fire Growth (t-squared)</strong></p>
-      <div style="${formulaBlockStyle}">Q̇ = α × t² (kW)</div>
+      <div style="${formulaBlockStyle}">${renderMath('\\dot{Q} = \\alpha \\times t^2 \\text{ (kW)}')}</div>
       <p><strong>Step 2: Fire Diameter</strong></p>
-      <div style="${formulaBlockStyle}">D = 2 × √(Q̇ / (π × HRR_density))</div>
+      <div style="${formulaBlockStyle}">${renderMath('D = 2 \\times \\sqrt{\\dot{Q} / (\\pi \\times \\text{HRR}_{\\text{density}})}')}</div>
       <p><strong>Step 3: Virtual Fire Origin</strong></p>
-      <div style="${formulaBlockStyle}">z₀ = -1.02 × D + 0.083 × Q̇^(2/5)</div>
+      <div style="${formulaBlockStyle}">${renderMath('z_0 = -1.02 \\times D + 0.083 \\times \\dot{Q}^{2/5}')}</div>
       <p><strong>Step 4: Regime Selection</strong></p>
       <ul>
         <li><strong>Plume:</strong> r/(H − z₀) ≤ 0.246 — use Eq 1 (temperature), Eq 2 (velocity)</li>
         <li><strong>Jet:</strong> r/(H − z₀) &gt; 0.246 — use Eq 3 (temperature), Eq 4 (velocity)</li>
       </ul>
       <p><strong>Equation 1 — Plume temperature</strong> (mean centre-line excess gas temperature):</p>
-      <div style="${formulaBlockStyle}">Δθ = 9.1 × (T₀/(g×cₚ²×ρ²))^(1/3) × Q̇_c^(2/3) × (z−z₀)^(−5/3)</div>
+      <div style="${formulaBlockStyle}">${renderMath('\\Delta\\theta = 9.1 \\times \\left(\\frac{T_0}{g \\cdot c_p^2 \\cdot \\rho^2}\\right)^{1/3} \\times \\dot{Q}_c^{2/3} \\times (z-z_0)^{-5/3}')}</div>
       <p><strong>Equation 2 — Plume velocity</strong> (mean gas velocity along fire centre-line):</p>
-      <div style="${formulaBlockStyle}">u = 3.4 × (g/(cₚ×ρ×T₀))^(1/3) × Q̇_c^(1/3) × (z−z₀)^(−1/3)</div>
+      <div style="${formulaBlockStyle}">${renderMath('u = 3.4 \\times \\left(\\frac{g}{c_p \\cdot \\rho \\cdot T_0}\\right)^{1/3} \\times \\dot{Q}_c^{1/3} \\times (z-z_0)^{-1/3}')}</div>
       <p><strong>Equation 3 — Ceiling jet temperature</strong> (axisymmetric):</p>
-      <div style="${formulaBlockStyle}">Δθ = 6.721 × Q̇_c^(2/3) / (H−z₀)^(5/3) × (r/(H−z₀))^(−0.6545)</div>
+      <div style="${formulaBlockStyle}">${renderMath('\\Delta\\theta = 6.721 \\times \\frac{\\dot{Q}_c^{2/3}}{(H-z_0)^{5/3}} \\times \\left(\\frac{r}{H-z_0}\\right)^{-0.6545}')}</div>
       <p><strong>Equation 4 — Ceiling jet velocity</strong> (axisymmetric):</p>
-      <div style="${formulaBlockStyle}">u = 0.2526 × Q̇_c^(1/3) / (H−z₀)^(1/3) × (r/(H−z₀))^(−1.0739)</div>
+      <div style="${formulaBlockStyle}">${renderMath('u = 0.2526 \\times \\frac{\\dot{Q}_c^{1/3}}{(H-z_0)^{1/3}} \\times \\left(\\frac{r}{H-z_0}\\right)^{-1.0739}')}</div>
       <p><strong>Step 5: Detector Temperature (Eq 5)</strong></p>
-      <div style="${formulaBlockStyle}">dΔT_e/dt = (u^½/RTI) × [ΔT_g − ΔT_e × (1 + C/u^½)]</div>
+      <div style="${formulaBlockStyle}">${renderMath('\\frac{d\\Delta T_e}{dt} = \\frac{u^{1/2}}{\\text{RTI}} \\times \\left[\\Delta T_g - \\Delta T_e \\times \\left(1 + \\frac{C}{u^{1/2}}\\right)\\right]')}</div>
       <p><em>Time-stepped until detector temperature ≥ activation temperature.</em></p>`;
 
     const activationTime = getOutput(1);

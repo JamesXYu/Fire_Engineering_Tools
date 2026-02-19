@@ -134,10 +134,22 @@ const MergeFlowCalculator = {
       <tr><td>Stair Width (W)</td><td>${fmt(W)}</td><td>mm</td></tr>
       <tr><td>Travel Distance (D)</td><td>${fmt(D)}</td><td>m</td></tr>`;
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
+
     const methodology = `
       <p><strong>Step 1: Base Formula</strong></p>
-      <div style="${formulaBlockStyle}">E = [(P/2.5) + (W × 0.06)] / 80 × 1000 mm</div>
+      <div style="${formulaBlockStyle}">${renderMath('E = \\frac{(P/2.5) + (W \\times 0.06)}{80} \\times 1000 \\text{ mm}')}</div>
       <p><strong>Step 2: Rule Selection</strong></p>
       <ul>
         <li><strong>P &lt; 60:</strong> Effective width = base formula result</li>
@@ -149,9 +161,9 @@ const MergeFlowCalculator = {
       const isThirdRule = P >= 60 && D < 2;
       workedExample = `
         <p>Given: P = ${fmt(P)}, W = ${fmt(W)} mm, D = ${fmt(D)} m</p>
-        <div style="${formulaBlockStyle}">E = [(${fmt(P)}/2.5) + (${fmt(W)} × 0.06)] / 80 × 1000 = ${fmt(baseCalc)} mm</div>
+        <div style="${formulaBlockStyle}">${renderMath(`E = \\frac{(${fmt(P)}/2.5) + (${fmt(W)} \\times 0.06)}{80} \\times 1000 = ${fmt(baseCalc)} \\text{ mm}`)}</div>
         <p>Since ${ruleApplied}:</p>
-        <div style="${formulaBlockStyle}">${isThirdRule ? `Effective width = max(${fmt(W)} mm, ${fmt(baseCalc)} mm) = ${effectiveWidth} mm` : `Effective width = ${effectiveWidth} mm`}</div>`;
+        <div style="${formulaBlockStyle}">${renderMath(`\\text{Effective width} = ${isThirdRule ? `\\max(${fmt(W)}, ${fmt(baseCalc)}) = ${effectiveWidth}` : effectiveWidth} \\text{ mm}`)}</div>`;
     } else {
       workedExample = '<p>Enter all input values to see worked example.</p>';
     }

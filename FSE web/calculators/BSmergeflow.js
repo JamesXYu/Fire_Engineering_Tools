@@ -279,6 +279,17 @@ const BS9999MergeFlowCalculator = {
 
     const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 2 }) : String(x));
 
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
+
     let inputTable = '';
     let methodology = '';
     let workedExample = '';
@@ -310,23 +321,23 @@ const BS9999MergeFlowCalculator = {
         <tr><td>Storey Exit Width (Wₑ)</td><td>${fmt(We)}</td><td>mm</td></tr>
         <tr><td>Door Width per Person (Wₚ)</td><td>${fmt(Wp)}</td><td>mm/person</td></tr>`;
 
-      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
       methodology = `
         <p><strong>Step 1: Travel Distance Assessment</strong></p>
         <ul><li>If D &lt; 2 m: Occupants reach stair quickly, merge before stair flow is fully established</li>
         <li>If D ≥ 2 m: Occupants take longer to reach stair, allowing stair flow to partially establish</li></ul>
         <p><strong>Step 2: Merge Flow Formulas</strong></p>
-        <div style="${formulaBlockStyle}">If D &lt; 2 m: Q_merge = (P × Wₚ) + (0.75 × Wₛ)</div>
-        <div style="${formulaBlockStyle}">If D ≥ 2 m: Q_merge = (P × Wₚ) + (0.50 × Wₛ)</div>
+        <div style="${formulaBlockStyle}">${renderMath('D < 2 \\text{ m: } Q_{merge} = (P \\times W_p) + (0.75 \\times W_s)')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('D \\geq 2 \\text{ m: } Q_{merge} = (P \\times W_p) + (0.50 \\times W_s)')}</div>
         <p><strong>Step 3: Final Exit Width</strong></p>
-        <div style="${formulaBlockStyle}">W_final = max(Q_merge, Wₑ)</div>`;
+        <div style="${formulaBlockStyle}">${renderMath('W_{final} = \\max(Q_{merge}, W_e)')}</div>`;
 
       if (hasAll) {
         workedExample = `
         <p>Given: P = ${fmt(P)}, Wₛ = ${fmt(Ws)} mm, D = ${fmt(D)} m, Wₑ = ${fmt(We)} mm, Wₚ = ${fmt(Wp)} mm/person</p>
-        <p>Since D ${dLess2 ? '&lt;' : '≥'} 2 m:</p>
-        <div style="${formulaBlockStyle}">Q_merge = (${fmt(P)} × ${fmt(Wp)}) + (${coeff} × ${fmt(Ws)}) = ${qMerge} mm</div>
-        <div style="${formulaBlockStyle}">W_final = max(${qMerge} mm, ${fmt(We)} mm) = ${wFinal} mm</div>`;
+        <p>Since D ${dLess2 ? '<' : '≥'} 2 m:</p>
+        <div style="${formulaBlockStyle}">${renderMath(`Q_{merge} = (${fmt(P)} \\times ${fmt(Wp)}) + (${coeff} \\times ${fmt(Ws)}) = ${qMerge} \\text{ mm}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`W_{final} = \\max(${qMerge}, ${fmt(We)}) = ${wFinal} \\text{ mm}`)}</div>`;
       } else {
         workedExample = '<p>Enter all input values to see worked example.</p>';
       }
@@ -354,22 +365,22 @@ const BS9999MergeFlowCalculator = {
         <tr><td>Stair Width Down (W_d)</td><td>${fmt(Wd)}</td><td>mm</td></tr>
         <tr><td>Door Width per Person (Wₚ)</td><td>${fmt(Wp)}</td><td>mm/person</td></tr>`;
 
-      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
       methodology = `
         <p><strong>Step 1: Effective Stair Width</strong></p>
-        <div style="${formulaBlockStyle}">W_eff = min(Wᵤ, W_d) × 0.85</div>
+        <div style="${formulaBlockStyle}">${renderMath('W_{eff} = \\min(W_u, W_d) \\times 0.85')}</div>
         <p><strong>Step 2: Merge Flow Formulas</strong></p>
-        <div style="${formulaBlockStyle}">If D &lt; 2 m: Q_merge = (P × Wₚ) + (0.85 × W_eff)</div>
-        <div style="${formulaBlockStyle}">If D ≥ 2 m: Q_merge = (P × Wₚ) + (0.60 × W_eff)</div>
+        <div style="${formulaBlockStyle}">${renderMath('D < 2 \\text{ m: } Q_{merge} = (P \\times W_p) + (0.85 \\times W_{eff})')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('D \\geq 2 \\text{ m: } Q_{merge} = (P \\times W_p) + (0.60 \\times W_{eff})')}</div>
         <p><strong>Step 3: Basement Safety Factor</strong></p>
-        <div style="${formulaBlockStyle}">W_final = Q_merge × 1.10</div>`;
+        <div style="${formulaBlockStyle}">${renderMath('W_{final} = Q_{merge} \\times 1.10')}</div>`;
 
       if (hasAll) {
         workedExample = `
-        <div style="${formulaBlockStyle}">W_eff = min(${fmt(Wu)} mm, ${fmt(Wd)} mm) × 0.85 = ${fmt(wEff)} mm</div>
-        <p>Since D ${dLess2 ? '&lt;' : '≥'} 2 m:</p>
-        <div style="${formulaBlockStyle}">Q_merge = (${fmt(P)} × ${fmt(Wp)}) + (${coeff} × ${fmt(wEff)}) = ${qMerge} mm</div>
-        <div style="${formulaBlockStyle}">W_final = ${qMerge} mm × 1.10 = ${wFinal} mm</div>`;
+        <div style="${formulaBlockStyle}">${renderMath(`W_{eff} = \\min(${fmt(Wu)}, ${fmt(Wd)}) \\times 0.85 = ${fmt(wEff)} \\text{ mm}`)}</div>
+        <p>Since D ${dLess2 ? '<' : '≥'} 2 m:</p>
+        <div style="${formulaBlockStyle}">${renderMath(`Q_{merge} = (${fmt(P)} \\times ${fmt(Wp)}) + (${coeff} \\times ${fmt(wEff)}) = ${qMerge} \\text{ mm}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`W_{final} = ${qMerge} \\times 1.10 = ${wFinal} \\text{ mm}`)}</div>`;
       } else {
         workedExample = '<p>Enter all input values to see worked example.</p>';
       }
@@ -402,27 +413,27 @@ const BS9999MergeFlowCalculator = {
         <tr><td>Distance to Stair (D)</td><td>${fmt(D)}</td><td>m</td></tr>
         <tr><td>Door Width per Person (Wₚ)</td><td>${fmt(Wp)}</td><td>mm/person</td></tr>`;
 
-      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+      const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
       methodology = `
         <p><strong>Step 1: Individual Level Merge Requirements</strong></p>
-        <div style="${formulaBlockStyle}">Upper Level: Q_upper = (Pᵤ × Wₚ) + (0.75 × Wᵤ)</div>
-        <div style="${formulaBlockStyle}">Basement Level: Q_lower = (P_b × Wₚ) + (0.75 × W_d)</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{Upper: } Q_{upper} = (P_u \\times W_p) + (0.75 \\times W_u)')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\text{Basement: } Q_{lower} = (P_b \\times W_p) + (0.75 \\times W_d)')}</div>
         <p><strong>Step 2: Cumulative Flow Formulas</strong></p>
-        <div style="${formulaBlockStyle}">If D &lt; 2 m (Simultaneous arrival): Q_total = max(Q_upper, Q_lower) + [0.50 × min(Q_upper, Q_lower)]</div>
-        <div style="${formulaBlockStyle}">If D ≥ 2 m (Staggered arrival): Q_total = 0.70 × (Q_upper + Q_lower)</div>
+        <div style="${formulaBlockStyle}">${renderMath('D < 2 \\text{ m: } Q_{total} = \\max(Q_{upper}, Q_{lower}) + 0.50 \\times \\min(Q_{upper}, Q_{lower})')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('D \\geq 2 \\text{ m: } Q_{total} = 0.70 \\times (Q_{upper} + Q_{lower})')}</div>
         <p><strong>Step 3: Accumulation Allowance</strong></p>
-        <div style="${formulaBlockStyle}">W_final = max(Q_total, Wₑ) × 1.15</div>`;
+        <div style="${formulaBlockStyle}">${renderMath('W_{final} = \\max(Q_{total}, W_e) \\times 1.15')}</div>`;
 
       if (hasAll) {
         const formulaText = dLess2
-          ? `max(${fmt(qUpper)}, ${fmt(qLower)}) + [0.50 × min(${fmt(qUpper)}, ${fmt(qLower)})]`
-          : `0.70 × (${fmt(qUpper)} + ${fmt(qLower)})`;
+          ? `\\max(${fmt(qUpper)}, ${fmt(qLower)}) + 0.50 \\times \\min(${fmt(qUpper)}, ${fmt(qLower)})`
+          : `0.70 \\times (${fmt(qUpper)} + ${fmt(qLower)})`;
         workedExample = `
-        <div style="${formulaBlockStyle}">Q_upper = (${fmt(Pu)} × ${fmt(Wp)}) + (0.75 × ${fmt(Wu)}) = ${fmt(qUpper)} mm</div>
-        <div style="${formulaBlockStyle}">Q_lower = (${fmt(Pb)} × ${fmt(Wp)}) + (0.75 × ${fmt(Wd)}) = ${fmt(qLower)} mm</div>
-        <p>Since D ${dLess2 ? '&lt;' : '≥'} 2 m:</p>
-        <div style="${formulaBlockStyle}">Q_total = ${formulaText} = ${qMerge} mm</div>
-        <div style="${formulaBlockStyle}">W_final = max(${qMerge} mm, ${fmt(We)} mm) × 1.15 = ${wFinal} mm</div>`;
+        <div style="${formulaBlockStyle}">${renderMath(`Q_{upper} = (${fmt(Pu)} \\times ${fmt(Wp)}) + (0.75 \\times ${fmt(Wu)}) = ${fmt(qUpper)} \\text{ mm}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`Q_{lower} = (${fmt(Pb)} \\times ${fmt(Wp)}) + (0.75 \\times ${fmt(Wd)}) = ${fmt(qLower)} \\text{ mm}`)}</div>
+        <p>Since D ${dLess2 ? '<' : '≥'} 2 m:</p>
+        <div style="${formulaBlockStyle}">${renderMath(`Q_{total} = ${formulaText} = ${qMerge} \\text{ mm}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`W_{final} = \\max(${qMerge}, ${fmt(We)}) \\times 1.15 = ${wFinal} \\text{ mm}`)}</div>`;
       } else {
         workedExample = '<p>Enter all input values to see worked example.</p>';
       }

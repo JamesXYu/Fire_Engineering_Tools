@@ -151,7 +151,18 @@ const FireGrowthRateCalculator = {
     };
     const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     let inputTable = '';
     let methodology = '';
@@ -171,7 +182,7 @@ const FireGrowthRateCalculator = {
         <p><strong>Step 1: Mode — Time → HRR</strong></p>
         <p>Heat release rate vs time. t-squared fire when n = 2.</p>
         <p><strong>Step 2: Fire growth formula</strong></p>
-        <div style="${formulaBlockStyle}">Q = α × tⁿ</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q = \\alpha \\times t^n')}</div>
         <p><em>Q = heat release rate (kW), α = growth factor (kW/sⁿ), t = time (s), n = growth power (n=2 for t-squared).</em></p>
         <p><strong>Step 3: Time series</strong></p>
         <p>At each time step t = 0, dt, 2dt, …: Q = α × tⁿ. Peak HRR at t_end.</p>`;
@@ -184,7 +195,7 @@ const FireGrowthRateCalculator = {
         const peakHRR = alpha * Math.pow(t_end, n);
         workedExample = `
           <p>Given: t = ${fmt(t_end)} s, α = ${fmt(alpha)} kW/sⁿ, n = ${fmt(n)}</p>
-          <div style="${formulaBlockStyle}">Q = α × tⁿ = ${fmt(alpha)} × ${fmt(t_end)}^${fmt(n)} = ${fmt(peakHRR)} kW</div>
+          <div style="${formulaBlockStyle}">${renderMath(`Q = \\alpha \\times t^n = ${fmt(alpha)} \\times ${fmt(t_end)}^{${fmt(n)}} = ${fmt(peakHRR)} \\text{ kW}`)}</div>
           <p><strong>Result:</strong> Peak HRR = ${outputVal} kW</p>`;
       } else {
         workedExample = '<p>Enter time and growth factor (α) to see worked example.</p>';
@@ -201,7 +212,7 @@ const FireGrowthRateCalculator = {
         <p><strong>Step 1: Mode — HRR → Time</strong></p>
         <p>Time to reach a given heat release rate.</p>
         <p><strong>Step 2: Invert fire growth formula</strong></p>
-        <div style="${formulaBlockStyle}">Q = α × tⁿ  ⇒  t = (Q / α)^(1/n)</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q = \\alpha \\times t^n \\Rightarrow t = (Q / \\alpha)^{1/n}')}</div>
         <p><em>Solve for t given Q, α, and n.</em></p>`;
 
       const Q = getVal(1);
@@ -212,7 +223,7 @@ const FireGrowthRateCalculator = {
         const t = Math.pow(Q / alpha, 1 / n);
         workedExample = `
           <p>Given: Q = ${fmt(Q)} kW, α = ${fmt(alpha)} kW/sⁿ, n = ${fmt(n)}</p>
-          <div style="${formulaBlockStyle}">t = (Q/α)^(1/n) = (${fmt(Q)}/${fmt(alpha)})^(1/${fmt(n)}) = ${fmt(t)} s</div>
+          <div style="${formulaBlockStyle}">${renderMath(`t = (Q/\\alpha)^{1/n} = (${fmt(Q)}/${fmt(alpha)})^{1/${fmt(n)}} = ${fmt(t)} \\text{ s}`)}</div>
           <p><strong>Result:</strong> Time t = ${outputVal} s</p>`;
       } else {
         workedExample = '<p>Enter Q and α to see worked example.</p>';

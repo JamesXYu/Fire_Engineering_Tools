@@ -265,7 +265,18 @@ const SteelHeatTransferCalculator = {
     };
     const fmt = (x) => (typeof x === 'number' && !isNaN(x) ? x.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (x != null ? String(x) : '—'));
 
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     let inputTable = '';
     let methodology = '';
@@ -287,15 +298,15 @@ const SteelHeatTransferCalculator = {
         <p><strong>Step 1: Mode — Unprotected steel (Eq. 4.25)</strong></p>
         <p>Steel member directly exposed to fire. Gas temperature from ISO 834 standard fire curve.</p>
         <p><strong>Step 2: ISO 834 gas temperature</strong></p>
-        <div style="${formulaBlockStyle}">T_g = 20 + 345 × log₁₀(8t + 1) (°C)</div>
+        <div style="${formulaBlockStyle}">${renderMath('T_g = 20 + 345 \\times \\log_{10}(8t + 1) \\text{ (°C)}')}</div>
         <p><em>Convert to Kelvin for heat transfer calculations.</em></p>
         <p><strong>Step 3: Net heat flux</strong></p>
-        <div style="${formulaBlockStyle}">h_net,c = α_c × (T_g − T_a)</div>
-        <div style="${formulaBlockStyle}">h_net,r = Φ × ε_m × ε_f × σ × (T_g⁴ − T_a⁴)</div>
-        <div style="${formulaBlockStyle}">h_net,d = h_net,c + h_net,r</div>
+        <div style="${formulaBlockStyle}">${renderMath('h_{net,c} = \\alpha_c \\times (T_g - T_a)')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('h_{net,r} = \\Phi \\times \\varepsilon_m \\times \\varepsilon_f \\times \\sigma \\times (T_g^4 - T_a^4)')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('h_{net,d} = h_{net,c} + h_{net,r}')}</div>
         <p><em>Φ = 1, ε_f = 1, σ = 5.67×10⁻⁸ W/m²K⁴</em></p>
         <p><strong>Step 4: Steel temperature rise (Eq. 4.25)</strong></p>
-        <div style="${formulaBlockStyle}">dθ_a/dt = k_sh × (A_m/V) / (ρ_a × c_a) × h_net,d</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\frac{d\\theta_a}{dt} = k_{sh} \\times \\frac{A_m/V}{\\rho_a \\times c_a} \\times h_{net,d}')}</div>
         <p><em>c_a = c_steel(T_a) — temperature-dependent specific heat (BS EN 1993-1-2 Table 3.1).</em></p>`;
 
       const A_m_V = getVal(3);
@@ -326,13 +337,13 @@ const SteelHeatTransferCalculator = {
         <p><strong>Step 1: Mode — Protected steel (Eq. 4.27, Clause 4.2.5.2)</strong></p>
         <p>Steel member with fire protection. Gas temperature from ISO 834.</p>
         <p><strong>Step 2: Protection capacity factor</strong></p>
-        <div style="${formulaBlockStyle}">φ = (c_p × ρ_p / c_a × ρ_a) × d_p × A_p / V</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\phi = \\frac{c_p \\times \\rho_p}{c_a \\times \\rho_a} \\times \\frac{d_p \\times A_p}{V}')}</div>
         <p><strong>Step 3: Heat transfer coefficient</strong></p>
-        <div style="${formulaBlockStyle}">a = (λ_p × A_p / V) / (d_p × c_a × ρ_a)</div>
+        <div style="${formulaBlockStyle}">${renderMath('a = \\frac{\\lambda_p \\times A_p / V}{d_p \\times c_a \\times \\rho_a}')}</div>
         <p><strong>Step 4: Temperature rise (Eq. 4.27)</strong></p>
-        <div style="${formulaBlockStyle}">b = (T_g − T_a) / (1 + φ/3)</div>
-        <div style="${formulaBlockStyle}">c = (e^(φ/10) − 1) × (T_g − T_g,prev)</div>
-        <div style="${formulaBlockStyle}">dθ_a/dt = (a × b × Δt − c) / Δt</div>
+        <div style="${formulaBlockStyle}">${renderMath('b = \\frac{T_g - T_a}{1 + \\phi/3}')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('c = (e^{\\phi/10} - 1) \\times (T_g - T_{g,prev})')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('\\frac{d\\theta_a}{dt} = \\frac{a \\times b \\times \\Delta t - c}{\\Delta t}')}</div>
         <p><em>If dθ_a/dt &lt; 0 while fire is heating, set dθ_a/dt = 0.</em></p>`;
 
       const A = getVal(3);

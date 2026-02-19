@@ -348,7 +348,18 @@ const FlameheightCalculator = {
     let workedExample = '';
     let qStar = '—';
     let flameHeight = getOutput('output2');
-    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px;';
+    const formulaBlockStyle = 'margin: 6px 0; padding: 8px 12px; background: var(--result-card-bg); border: 1px solid var(--window-border); border-radius: 4px; font-size: 12px; overflow-x: auto;';
+
+    const renderMath = (latex) => {
+      if (typeof katex !== 'undefined') {
+        try {
+          return katex.renderToString(latex, { throwOnError: false, displayMode: true });
+        } catch (e) {
+          return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+        }
+      }
+      return '<span style="color: var(--text-secondary);">' + latex + '</span>';
+    };
 
     const subLabels = { '4': 'Natural Gas', '5': 'Wood Cribs', '6': 'Gas Liquids Solids' };
     const methodLabels = { '1': 'Circular', '2': 'Line', '3': 'Rectangular' };
@@ -357,16 +368,16 @@ const FlameheightCalculator = {
       inputTable = config.inputs.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.id === 'input1' ? 'kW' : i.id === 'input2' ? 'kg/m³' : i.id === 'input3' ? 'kJ/(kg K)' : i.id === 'input4' ? 'K' : i.id === 'input5' ? 'm/s²' : 'm'}</td></tr>`).join('');
       methodology = `
         <p><strong>Step 1: Dimensionless HRR (Circular)</strong></p>
-        <div style="${formulaBlockStyle}">Q* = Q / (ρ × cₚ × T × √g × D²·⁵)</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q^* = \\frac{Q}{\\rho \\times c_p \\times T \\times \\sqrt{g} \\times D^{2.5}}')}</div>
         <p><strong>Step 2: Flame Height (${subLabels[subMethod] || '—'})</strong></p>
         ${subMethod === '4' ? `
-        <div style="${formulaBlockStyle}">Q* &lt; 0.15: H_f = Q*² × 40 × D</div>
-        <div style="${formulaBlockStyle}">0.15 ≤ Q* &lt; 1: H_f = Q*²/³ × 3.3 × D</div>
-        <div style="${formulaBlockStyle}">1 ≤ Q* &lt; 40: H_f = Q*²/⁵ × 3.3 × D</div>
-        <div style="${formulaBlockStyle}">Q* ≥ 40: N/A</div>` : subMethod === '5' ? `
-        <div style="${formulaBlockStyle}">0.75 &lt; Q* &lt; 8.8: H_f = Q*⁰·⁶¹ × 3.4 × D</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q^* < 0.15: \\quad H_f = (Q^*)^2 \\times 40 \\times D')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('0.15 \\leq Q^* < 1: \\quad H_f = (Q^*)^{2/3} \\times 3.3 \\times D')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('1 \\leq Q^* < 40: \\quad H_f = (Q^*)^{2/5} \\times 3.3 \\times D')}</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q^* \\geq 40: \\text{ N/A}')}</div>` : subMethod === '5' ? `
+        <div style="${formulaBlockStyle}">${renderMath('0.75 < Q^* < 8.8: \\quad H_f = (Q^*)^{0.61} \\times 3.4 \\times D')}</div>
         <div style="${formulaBlockStyle}">Else: N/A</div>` : subMethod === '6' ? `
-        <div style="${formulaBlockStyle}">0.12 &lt; Q* &lt; 12000: H_f = (Q*⁰·⁴ × 3.7 − 1.02) × D</div>
+        <div style="${formulaBlockStyle}">${renderMath('0.12 < Q^* < 12000: \\quad H_f = ((Q^*)^{0.4} \\times 3.7 - 1.02) \\times D')}</div>
         <div style="${formulaBlockStyle}">Else: N/A</div>` : ''}`;
 
       if (hasAll) {
@@ -385,8 +396,8 @@ const FlameheightCalculator = {
         flameHeight = hCalc != null ? fmt(hCalc) : getOutput('output2');
         workedExample = `
         <p>Given: Q = ${fmt(Q)} kW, ρ = ${fmt(rho)} kg/m³, cₚ = ${fmt(cp)}, T = ${fmt(T)} K, g = ${fmt(g)} m/s², D = ${fmt(D)} m</p>
-        <div style="${formulaBlockStyle}">Q* = ${fmt(Q)} / (${fmt(rho)} × ${fmt(cp)} × ${fmt(T)} × √${fmt(g)} × ${fmt(D)}²·⁵) = ${qStar}</div>
-        <div style="${formulaBlockStyle}">H_f = ${flameHeight} m</div>`;
+        <div style="${formulaBlockStyle}">${renderMath(`Q^* = \\frac{${fmt(Q)}}{${fmt(rho)} \\times ${fmt(cp)} \\times ${fmt(T)} \\times \\sqrt{${fmt(g)}} \\times ${fmt(D)}^{2.5}} = ${qStar}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`H_f = ${flameHeight} \\text{ m}`)}</div>`;
       } else {
         workedExample = '<p>Enter all input values to see worked example.</p>';
       }
@@ -394,9 +405,9 @@ const FlameheightCalculator = {
       inputTable = config.inputs.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.id === 'input6' ? 'm' : i.id === 'input1' ? 'kW' : i.id === 'input2' ? 'kg/m³' : i.id === 'input3' ? 'kJ/(kg K)' : i.id === 'input4' ? 'K' : 'm/s²'}</td></tr>`).join('');
       methodology = `
         <p><strong>Step 1: Dimensionless HRR (Line fire)</strong></p>
-        <div style="${formulaBlockStyle}">Q* = Q / (ρ × cₚ × T × √g × L¹·⁵)</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q^* = \\frac{Q}{\\rho \\times c_p \\times T \\times \\sqrt{g} \\times L^{1.5}}')}</div>
         <p><strong>Step 2: Flame Height</strong></p>
-        <div style="${formulaBlockStyle}">H_f = 3.46 × Q* × L</div>`;
+        <div style="${formulaBlockStyle}">${renderMath('H_f = 3.46 \\times Q^* \\times L')}</div>`;
 
       if (hasAll) {
         const qStarVal = Q / (rho * cp * T * Math.sqrt(g) * Math.pow(D, 1.5));
@@ -405,8 +416,8 @@ const FlameheightCalculator = {
         flameHeight = fmt(hCalc);
         workedExample = `
         <p>Given: Q = ${fmt(Q)} kW, ρ = ${fmt(rho)} kg/m³, cₚ = ${fmt(cp)}, T = ${fmt(T)} K, g = ${fmt(g)} m/s², L = ${fmt(D)} m</p>
-        <div style="${formulaBlockStyle}">Q* = ${fmt(Q)} / (${fmt(rho)} × ${fmt(cp)} × ${fmt(T)} × √${fmt(g)} × ${fmt(D)}¹·⁵) = ${qStar}</div>
-        <div style="${formulaBlockStyle}">H_f = 3.46 × ${qStar} × ${fmt(D)} = ${flameHeight} m</div>`;
+        <div style="${formulaBlockStyle}">${renderMath(`Q^* = \\frac{${fmt(Q)}}{${fmt(rho)} \\times ${fmt(cp)} \\times ${fmt(T)} \\times \\sqrt{${fmt(g)}} \\times ${fmt(D)}^{1.5}} = ${qStar}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`H_f = 3.46 \\times ${qStar} \\times ${fmt(D)} = ${flameHeight} \\text{ m}`)}</div>`;
       } else {
         workedExample = '<p>Enter all input values to see worked example.</p>';
       }
@@ -414,9 +425,9 @@ const FlameheightCalculator = {
       inputTable = config.inputs.map(i => `<tr><td>${i.label}</td><td>${fmt(getVal(i.id))}</td><td>${i.id === 'input6' || i.id === 'input7' ? 'm' : i.id === 'input1' ? 'kW' : i.id === 'input2' ? 'kg/m³' : i.id === 'input3' ? 'kJ/(kg K)' : i.id === 'input4' ? 'K' : 'm/s²'}</td></tr>`).join('');
       methodology = `
         <p><strong>Step 1: Dimensionless HRR (Rectangular, L &gt; W)</strong></p>
-        <div style="${formulaBlockStyle}">Q* = Q / (ρ × cₚ × T × √g × W¹·⁵ × L)</div>
+        <div style="${formulaBlockStyle}">${renderMath('Q^* = \\frac{Q}{\\rho \\times c_p \\times T \\times \\sqrt{g} \\times W^{1.5} \\times L}')}</div>
         <p><strong>Step 2: Flame Height</strong></p>
-        <div style="${formulaBlockStyle}">H_f = 3.46 × Q* × L</div>
+        <div style="${formulaBlockStyle}">${renderMath('H_f = 3.46 \\times Q^* \\times L')}</div>
         <p><em>Requires L (long) &gt; W (short).</em></p>`;
 
       if (hasAll && D > L2) {
@@ -426,8 +437,8 @@ const FlameheightCalculator = {
         flameHeight = fmt(hCalc);
         workedExample = `
         <p>Given: Q = ${fmt(Q)} kW, ρ = ${fmt(rho)}, cₚ = ${fmt(cp)}, T = ${fmt(T)} K, g = ${fmt(g)} m/s², L = ${fmt(D)} m, W = ${fmt(L2)} m</p>
-        <div style="${formulaBlockStyle}">Q* = ${fmt(Q)} / (${fmt(rho)} × ${fmt(cp)} × ${fmt(T)} × √${fmt(g)} × ${fmt(L2)}¹·⁵ × ${fmt(D)}) = ${qStar}</div>
-        <div style="${formulaBlockStyle}">H_f = 3.46 × ${qStar} × ${fmt(D)} = ${flameHeight} m</div>`;
+        <div style="${formulaBlockStyle}">${renderMath(`Q^* = \\frac{${fmt(Q)}}{${fmt(rho)} \\times ${fmt(cp)} \\times ${fmt(T)} \\times \\sqrt{${fmt(g)}} \\times ${fmt(L2)}^{1.5} \\times ${fmt(D)}} = ${qStar}`)}</div>
+        <div style="${formulaBlockStyle}">${renderMath(`H_f = 3.46 \\times ${qStar} \\times ${fmt(D)} = ${flameHeight} \\text{ m}`)}</div>`;
       } else if (hasAll && D <= L2) {
         workedExample = '<p>Long dimension must be greater than short dimension. Swap L and W.</p>';
       } else {
