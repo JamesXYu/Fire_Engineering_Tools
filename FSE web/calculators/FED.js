@@ -57,7 +57,7 @@ function runFEDCalculationMulti(inputs) {
 
 const FEDCalculator = {
   type: 'FED',
-  name: 'FED (Radiation)',
+  name: 'Fractional Effective Dose',
   icon: '☢️',
   hasTimeSeries: true,
 

@@ -23,7 +23,7 @@ const categories = [
       { id: 'flameheight', label: 'Flame Height', type: 'Flameheight', icon: '📏' },
       { id: 'detector-activation', label: 'Detector Activation', type: 'DetectorActivation', icon: '🔔' },
       { id: 'fire-plume', label: 'Fire Plume', type: 'FirePlume', icon: '🌪️' },
-      { id: 'fed-radiation', label: 'FED (Radiation)', type: 'FED', icon: '🍳' },
+      { id: 'fed-radiation', label: 'Fractional Effective Dose', type: 'FED', icon: '🍳' },
     ]
   },
   {

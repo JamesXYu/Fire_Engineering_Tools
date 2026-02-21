@@ -117,7 +117,7 @@ body {
 }
 
 .sidebar {
-  width: 250px;
+  width: 260px;
   height: 100vh;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
