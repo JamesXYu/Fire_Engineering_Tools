@@ -1,12 +1,13 @@
 @echo off
 REM Fire Engineering Tools - Windows Control Script
 REM Usage: run.bat [command]
-REM Commands: start, persist, stop, restart, status, help
+REM Commands: start, persist, stop, restart, status, firewall, help
 
 setlocal EnableDelayedExpansion
 
 set PORT=4000
 set SERVE_DIR=%~dp0FSE web
+set FW_RULE_NAME=Fire Engineering Tools (Port %PORT%)
 
 if "%1"=="" goto :usage
 if /i "%1"=="start" goto :start
@@ -14,6 +15,7 @@ if /i "%1"=="persist" goto :persist
 if /i "%1"=="stop" goto :stop
 if /i "%1"=="restart" goto :restart
 if /i "%1"=="status" goto :status
+if /i "%1"=="firewall" goto :firewall
 if /i "%1"=="help" goto :usage
 if /i "%1"=="--help" goto :usage
 if /i "%1"=="-h" goto :usage
@@ -67,6 +69,64 @@ echo   access using the Network URL above.
 exit /b
 
 REM ============================================
+REM Open firewall port
+REM ============================================
+:open_firewall
+REM Check if rule already exists
+netsh advfirewall firewall show rule name="%FW_RULE_NAME%" >nul 2>&1
+if %errorlevel%==0 (
+    echo   [92mFirewall rule already exists.[0m
+    exit /b 0
+)
+
+echo   Opening firewall for port %PORT%...
+netsh advfirewall firewall add rule name="%FW_RULE_NAME%" dir=in action=allow protocol=TCP localport=%PORT% >nul 2>&1
+if %errorlevel%==0 (
+    echo   [92mFirewall rule added successfully.[0m
+    exit /b 0
+) else (
+    echo.
+    echo   [91mFailed to add firewall rule.[0m
+    echo   [93mThis requires Administrator privileges.[0m
+    echo.
+    echo   Please either:
+    echo     1. Right-click run.bat and select "Run as administrator"
+    echo     2. Or run: run.bat firewall   (as admin, one-time setup)
+    echo     3. Or manually open port %PORT% in Windows Firewall
+    echo.
+    exit /b 1
+)
+
+REM ============================================
+REM Firewall command (standalone)
+REM ============================================
+:firewall
+echo =========================================
+echo   Firewall Configuration
+echo =========================================
+echo.
+
+REM Check current status
+netsh advfirewall firewall show rule name="%FW_RULE_NAME%" >nul 2>&1
+if %errorlevel%==0 (
+    echo   Firewall rule already exists for port %PORT%.
+    echo.
+    echo   Current rule:
+    netsh advfirewall firewall show rule name="%FW_RULE_NAME%" | findstr /c:"Rule Name" /c:"Enabled" /c:"Direction" /c:"Action" /c:"LocalPort"
+    echo.
+    echo   To remove it, run:
+    echo     netsh advfirewall firewall delete rule name="%FW_RULE_NAME%"
+) else (
+    echo   No firewall rule found for port %PORT%.
+    echo   Adding rule now...
+    echo.
+    call :open_firewall
+)
+echo.
+echo =========================================
+goto :eof
+
+REM ============================================
 REM Start (foreground, session-dependent)
 REM ============================================
 :start
@@ -83,6 +143,8 @@ if %errorlevel%==0 (
     echo =========================================
     goto :eof
 )
+
+call :open_firewall
 
 call :print_urls
 echo   Press Ctrl+C to stop the server.
@@ -120,6 +182,9 @@ if %errorlevel%==0 (
     echo =========================================
     goto :eof
 )
+
+call :open_firewall
+echo.
 
 if not exist "logs" mkdir logs
 
@@ -247,6 +312,16 @@ if %errorlevel%==0 (
 ) else (
     echo   Status: [91mSTOPPED[0m
 )
+
+echo.
+echo   Firewall:
+netsh advfirewall firewall show rule name="%FW_RULE_NAME%" >nul 2>&1
+if %errorlevel%==0 (
+    echo   [92mPort %PORT% is open[0m
+) else (
+    echo   [91mPort %PORT% is NOT open - run: run.bat firewall[0m
+)
+
 echo.
 echo =========================================
 goto :eof
@@ -265,14 +340,18 @@ echo   persist    Start in persistent mode (survives disconnects, auto-restart)
 echo   stop       Stop the server
 echo   restart    Restart the server
 echo   status     Check if server is running
+echo   firewall   Open port %PORT% in Windows Firewall (run as admin)
 echo   help       Show this help message
 echo.
 echo Examples:
+echo   run.bat firewall   # First time: open port (run as admin)
 echo   run.bat persist    # For company servers (RECOMMENDED)
 echo   run.bat start      # For local testing
 echo   run.bat status     # Check what's running
 echo   run.bat stop       # Stop everything
 echo.
-echo For remote/company servers, use 'persist' to keep running after disconnect.
+echo IMPORTANT: On Windows Server, you must run 'run.bat firewall' once as
+echo Administrator to allow network access. Or right-click run.bat and
+echo select "Run as administrator" the first time you use start/persist.
 echo.
 goto :eof
