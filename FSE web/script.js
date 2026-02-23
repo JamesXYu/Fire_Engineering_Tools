@@ -381,6 +381,30 @@ function updateWindowSize(id, width, height) {
     
     window.width = newWidth;
     window.height = newHeight;
+
+    // Sync attached help/figure windows to match this calculator's size
+    if (!window.type.endsWith('-help') && !window.type.endsWith('-figure')) {
+      const attachedWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
+      attachedWindows.forEach(aw => {
+        const awMin = getMinimumSize(aw.type);
+        aw.width = Math.max(newWidth, awMin.width);
+        aw.height = Math.max(newHeight, awMin.height);
+
+        // Reposition to stay adjacent after width change
+        const spacing = 20;
+        const workspace = document.getElementById('workspace');
+        const workspaceRect = workspace.getBoundingClientRect();
+        let newX = window.x + newWidth + spacing;
+        let newY = window.y;
+        if (newX + aw.width > workspaceRect.width) {
+          newX = window.x - aw.width - spacing;
+          if (newX < 0) { newX = window.x; newY = window.y + newHeight + spacing; }
+        }
+        aw.x = Math.max(0, Math.min(newX, workspaceRect.width - aw.width));
+        aw.y = Math.max(0, Math.min(newY, workspaceRect.height - 40));
+      });
+    }
+
     renderWindows();
     // Don't save windows to storage, only sizes when closing
   }
@@ -1163,11 +1187,11 @@ function openHelpWindow(sourceWindowId) {
   } else if (calculator.name) {
     helpTitle = `${calculator.name} - Help`;
   }
-  // Match help window height to source; use larger min for time-series (chart + table), except Fire Growth Rate
+  // Match help window to source calculator's width and height
   const helpHeight = (sourceWindow.type === 'FireGrowthRate')
     ? sourceWindow.height
     : (calculator.hasTimeSeries ? Math.max(sourceWindow.height, 600) : sourceWindow.height);
-  const helpWindowId = openWindow(helpType, helpTitle, { height: helpHeight });
+  const helpWindowId = openWindow(helpType, helpTitle, { width: sourceWindow.width, height: helpHeight });
   
   // Position help window next to source window
   setTimeout(() => {
