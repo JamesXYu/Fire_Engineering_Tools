@@ -382,15 +382,13 @@ function updateWindowSize(id, width, height) {
     window.width = newWidth;
     window.height = newHeight;
 
-    // Sync attached help/figure windows to match this calculator's size
+    // Sync attached help/figure window height (not width) to match this calculator
     if (!window.type.endsWith('-help') && !window.type.endsWith('-figure')) {
       const attachedWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
       attachedWindows.forEach(aw => {
-        const awMin = getMinimumSize(aw.type);
-        aw.width = Math.max(newWidth, awMin.width);
-        aw.height = Math.max(newHeight, awMin.height);
+        aw.height = newHeight;
 
-        // Reposition to stay adjacent after width change
+        // Reposition to stay adjacent after source size change
         const spacing = 20;
         const workspace = document.getElementById('workspace');
         const workspaceRect = workspace.getBoundingClientRect();
@@ -1187,11 +1185,11 @@ function openHelpWindow(sourceWindowId) {
   } else if (calculator.name) {
     helpTitle = `${calculator.name} - Help`;
   }
-  // Match help window to source calculator's width and height
+  // Match help window height to source calculator
   const helpHeight = (sourceWindow.type === 'FireGrowthRate')
     ? sourceWindow.height
     : (calculator.hasTimeSeries ? Math.max(sourceWindow.height, 600) : sourceWindow.height);
-  const helpWindowId = openWindow(helpType, helpTitle, { width: sourceWindow.width, height: helpHeight });
+  const helpWindowId = openWindow(helpType, helpTitle, { height: helpHeight });
   
   // Position help window next to source window
   setTimeout(() => {
