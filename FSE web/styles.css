@@ -16,11 +16,11 @@
   --light-button-hover: #e8e8e8;
   --light-primary-color: #00a19b;
   
-  /* Dark theme (black window for figures, grey elsewhere) */
+  /* Dark theme */
   --dark-bg: #1e1e1e;
   --dark-sidebar-bg: #252526;
-  --dark-window-bg: #000000;
-  --dark-title-bar-bg: #2d2d30;
+  --dark-window-bg: #2a2a2a;
+  --dark-title-bar-bg: #d2d30;
   --dark-text-primary: #cccccc;
   --dark-text-secondary: #858585;
   --dark-border: #3e3e42;
@@ -238,7 +238,7 @@ body {
   background: var(--window-bg);
   border: 1px solid var(--window-border);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.28);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -246,7 +246,7 @@ body {
 }
 
 .calculator-window:hover {
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
 }
 
 .calculator-window.maximized {
