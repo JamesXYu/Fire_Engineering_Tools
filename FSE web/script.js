@@ -1,5 +1,5 @@
 // Calculators that have figure images (show pin button)
-const CALCULATORS_WITH_FIGURES = ['mergeflow', 'BSmergeflow', 'Flameheight', 'DetectorActivation', 'FirePlume', 'Externalfirespread'];
+const CALCULATORS_WITH_FIGURES = ['mergeflow', 'BSmergeflow', 'Flameheight', 'DetectorActivation', 'FirePlume', 'Externalfirespread', 'FED'];
 
 // State Management
 const state = {
@@ -382,10 +382,12 @@ function updateWindowSize(id, width, height) {
     window.width = newWidth;
     window.height = newHeight;
 
-    // Sync attached help/figure window height (not width) to match this calculator
+    // Sync attached help window height (not width) to match this calculator
     if (!window.type.endsWith('-help') && !window.type.endsWith('-figure')) {
-      const attachedWindows = state.windows.filter(w => w.sourceWindowId === id && w.isAttached);
-      attachedWindows.forEach(aw => {
+      const attachedHelpWindows = state.windows.filter(
+        w => w.sourceWindowId === id && w.isAttached && w.type.endsWith('-help')
+      );
+      attachedHelpWindows.forEach(aw => {
         aw.height = newHeight;
 
         // Reposition to stay adjacent after source size change

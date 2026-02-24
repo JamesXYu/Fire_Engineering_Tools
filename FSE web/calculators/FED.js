@@ -74,7 +74,23 @@ const FEDCalculator = {
   getOutputCount() { return 2; },
 
   getMinimumSize() {
-    return { width: 480, height: 800 };
+    const titleBarHeight = 40;
+    const windowContentPadding = 32;
+    const formGap = 15;
+    const inputSectionHeight = 44;
+    const outputSectionHeight = 44;
+    const dividerHeight = 7;
+    const actionsHeight = 64;
+    const tableBlockHeight = 160;
+    const inputCount = this.getInputCount();
+    const outputCount = this.getOutputCount();
+    const totalFieldCount = inputCount + outputCount;
+    const inputSectionsHeight = inputCount * inputSectionHeight;
+    const outputSectionsHeight = outputCount * outputSectionHeight;
+    const totalSectionsHeight = inputSectionsHeight + outputSectionsHeight;
+    const gapsHeight = (totalFieldCount + 1) * formGap;
+    const minHeight = titleBarHeight + windowContentPadding + totalSectionsHeight + gapsHeight + tableBlockHeight + dividerHeight + actionsHeight + 5;
+    return { width: 400, height: minHeight };
   },
 
   _buildPathTableHTML(windowId, pointCount) {
@@ -101,7 +117,7 @@ const FEDCalculator = {
     const pc = this.getPointCount(windowId);
     const thStyle = 'padding: 5px 6px; border: 1px solid var(--window-border); font-size: 11px; font-weight: 600; background: var(--button-hover); text-align: center;';
     return `
-      <div class="form-calculator form-calculator-timeseries" id="calc-${windowId}" style="min-width: 380px;">
+      <div class="form-calculator form-calculator-timeseries" id="calc-${windowId}">
         <div class="calc-input-section">
           <div class="calc-section">
             <label class="calc-label">Walking speed v (m/s)</label>
