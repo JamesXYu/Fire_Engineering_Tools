@@ -86,12 +86,12 @@ const StefanBoltzmannCalculator = {
           ${isTemperature ? `
           <div class="calc-section">
             <label class="calc-label">Surface T<sub>1</sub> (°C)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" data-window-id="${windowId}">
           </div>
           ` : `
           <div class="calc-section">
             <label class="calc-label">Heat flux P (kW/m²)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           `}
         </div>

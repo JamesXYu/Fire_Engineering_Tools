@@ -237,43 +237,43 @@ const DetectorActivationCalculator = {
         <div class="calc-input-section">
           <div class="calc-section">
             <label class="calc-label">Duration t<sub>end</sub> (s)</label>
-            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="3600" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Time Step Δt (s)</label>
-            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="1" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Fire Growth Factor α (kW/s²)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="0.012" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Height z (m)</label>
-            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Radial Distance r (m)</label>
-            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Response Time Index RTI (m½s½)</label>
-            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Conduction factor C (m½/s½)</label>
-            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="66.7" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Activation Temperature T<sub>act</sub> (°C)</label>
-            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="68" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Convection HRR χ<sub>c</sub> (%)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="-" min="0" max="100" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="" min="0" max="100" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">HRR density q̇ (kW/m²)</label>
-            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
         </div>
         
@@ -434,14 +434,14 @@ const DetectorActivationCalculator = {
 
   // Required: Calculate function
   calculate(windowId) {
-    const input1El = document.getElementById(`input1-${windowId}`);
-    const input2El = document.getElementById(`input2-${windowId}`);
-    const input3El = document.getElementById(`input3-${windowId}`);
+    const input1El = document.getElementById(`input1-${windowId}`) || 3600;
+    const input2El = document.getElementById(`input2-${windowId}`) || 1;
+    const input3El = document.getElementById(`input3-${windowId}`) || 0.012;
     const input4El = document.getElementById(`input4-${windowId}`);
     const input5El = document.getElementById(`input5-${windowId}`);
     const input6El = document.getElementById(`input6-${windowId}`);
-    const input7El = document.getElementById(`input7-${windowId}`);
-    const input8El = document.getElementById(`input8-${windowId}`);
+    const input7El = document.getElementById(`input7-${windowId}`) || 66.7;
+    const input8El = document.getElementById(`input8-${windowId}`) || 68;
     const input9El = document.getElementById(`input9-${windowId}`);
     const input10El = document.getElementById(`input10-${windowId}`);
     const result1El = document.getElementById(`result1-${windowId}`);

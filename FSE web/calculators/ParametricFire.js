@@ -288,36 +288,36 @@ const ParametricFireCalculator = {
           </div>
           <div class="calc-section">
             <label class="calc-label">Total surface A<sub>t</sub> (m²)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Floor area A<sub>f</sub> (m²)</label>
-            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           ${isBSEN ? `
           <div class="calc-section">
             <label class="calc-label">Opening area A<sub>v</sub> (m²)</label>
-            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Opening height h<sub>eq</sub> (m)</label>
-            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Fire load q<sub>fd</sub> (MJ/m²)</label>
-            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="—" min="0" step="1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="" min="0" step="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Lining λ (W/mK)</label>
-            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Lining ρ (kg/m³)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="—" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Lining c (J/kgK)</label>
-            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="—" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Limiting time t<sub>lim</sub> (s)</label>
@@ -330,11 +330,11 @@ const ParametricFireCalculator = {
           ` : `
           <div class="calc-section">
             <label class="calc-label">Window area A<sub>w</sub> (m²)</label>
-            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Window height h<sub>w</sub> (m)</label>
-            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Fire growth t<sub>α</sub> (s)</label>
@@ -354,7 +354,7 @@ const ParametricFireCalculator = {
           </div>
           <div class="calc-section">
             <label class="calc-label">Fire load q<sub>x,d</sub> (MJ/m²)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="—" min="100" max="1300" step="1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="" min="100" max="1300" step="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">γ<sub>fi,Q</sub> (-)</label>

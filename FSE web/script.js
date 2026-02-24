@@ -181,6 +181,8 @@ function adjustWindowSizeForViewport(windowType, minSize, requestedHeight) {
 
 // Get minimum window size based on calculator type
 function getMinimumSize(windowType) {
+  const MIN_CALCULATOR_WIDTH = 500;
+
   // Figure windows size to image; use small min for edge cases
   if (windowType.endsWith('-figure')) {
     return { width: 250, height: 250 };
@@ -199,11 +201,12 @@ function getMinimumSize(windowType) {
   // Get calculator from registry
   const calculator = CalculatorRegistry.get(windowType);
   if (calculator && calculator.getMinimumSize) {
-    return calculator.getMinimumSize();
+    const size = calculator.getMinimumSize();
+    return { width: Math.max(size.width, MIN_CALCULATOR_WIDTH), height: size.height };
   }
   
   // Default minimum size
-  return { width: 400, height: 200 };
+  return { width: MIN_CALCULATOR_WIDTH, height: 200 };
 }
 
 // Window Management
@@ -382,13 +385,16 @@ function updateWindowSize(id, width, height) {
     window.width = newWidth;
     window.height = newHeight;
 
-    // Sync attached help window height (not width) to match this calculator
+    // Keep attached windows docked to this calculator on resize.
+    // Help windows also mirror calculator height; figure windows keep their own size.
     if (!window.type.endsWith('-help') && !window.type.endsWith('-figure')) {
-      const attachedHelpWindows = state.windows.filter(
-        w => w.sourceWindowId === id && w.isAttached && w.type.endsWith('-help')
+      const attachedWindows = state.windows.filter(
+        w => w.sourceWindowId === id && w.isAttached
       );
-      attachedHelpWindows.forEach(aw => {
-        aw.height = newHeight;
+      attachedWindows.forEach(aw => {
+        if (aw.type.endsWith('-help')) {
+          aw.height = newHeight;
+        }
 
         // Reposition to stay adjacent after source size change
         const spacing = 20;
@@ -520,9 +526,44 @@ function restoreInputValues(savedValues) {
   });
 }
 
+// Style label symbols globally: "Description Symbol (unit)"
+function styleCalculatorLabelSymbols() {
+  document.querySelectorAll('.calc-label').forEach(label => {
+    if (label.querySelector('.calc-symbol')) return; // idempotent across re-renders
+
+    const html = label.innerHTML.trim();
+    // Split by the final " (" so units are preserved even when they contain nested tags
+    const unitStart = html.lastIndexOf(' (');
+    if (unitStart === -1) return;
+
+    const head = html.slice(0, unitStart).trim();
+    const unit = html.slice(unitStart);
+    const lastSpace = head.lastIndexOf(' ');
+    if (lastSpace <= 0) return;
+
+    const description = head.slice(0, lastSpace);
+    const symbol = head.slice(lastSpace + 1).trim();
+    if (!symbol) return;
+
+    label.innerHTML = `${description} <span class="calc-symbol">${symbol}</span>${unit}`;
+  });
+}
+
 function renderWindows() {
   // Save input values before re-rendering
   const savedValues = saveInputValues();
+  // Preserve content scroll positions because render replaces window DOM
+  const scrollPositions = {};
+  document.querySelectorAll('#workspace .calculator-window .window-content').forEach(contentEl => {
+    const winEl = contentEl.closest('.calculator-window');
+    const windowId = winEl ? winEl.getAttribute('data-window-id') : null;
+    if (windowId) {
+      scrollPositions[windowId] = {
+        top: contentEl.scrollTop,
+        left: contentEl.scrollLeft
+      };
+    }
+  });
   
   // Restore calculator state (like method selection) BEFORE rendering HTML
   // This ensures getHTML() uses the correct method
@@ -649,9 +690,19 @@ function renderWindows() {
       </div>
     `;
   }).join('');
+
+  // Restore content scroll positions after DOM re-render
+  Object.keys(scrollPositions).forEach(windowId => {
+    const contentEl = document.querySelector(`.calculator-window[data-window-id="${windowId}"] .window-content`);
+    if (contentEl) {
+      contentEl.scrollTop = scrollPositions[windowId].top;
+      contentEl.scrollLeft = scrollPositions[windowId].left;
+    }
+  });
   
   // Attach event listeners after rendering
   attachWindowEvents();
+  styleCalculatorLabelSymbols();
   
   // Restore input values after re-rendering
   restoreInputValues(savedValues);
@@ -1037,20 +1088,21 @@ function openFigureWindow(sourceWindowId) {
     const viewport = getAvailableViewportSize();
     const titleBarHeight = 40;
     const padding = 40; // 20px each side
+    const sizeScale = 0.5;
     const minWidth = 300;
-    const minHeight = 250;
+    const minHeight = 400;
     const maxWidth = Math.floor(viewport.width * 0.9);
     const maxHeight = Math.floor(viewport.height * 0.9) - 20;
     
-    let width = Math.min(img.naturalWidth + padding, maxWidth);
-    let height = Math.min(img.naturalHeight + titleBarHeight + padding, maxHeight);
+    let width = Math.min(img.naturalWidth + padding, maxWidth) * sizeScale;
+    let height = Math.min(img.naturalHeight + titleBarHeight + padding, maxHeight) * sizeScale;
     width = Math.max(width, minWidth);
     height = Math.max(height, minHeight);
     
     createFigureWindow(sourceWindowId, figureType, figureImagePath, figureTitle, { width, height });
   };
   img.onerror = function() {
-    createFigureWindow(sourceWindowId, figureType, figureImagePath, figureTitle, { width: 600, height: 500 });
+    createFigureWindow(sourceWindowId, figureType, figureImagePath, figureTitle, { width: 300, height: 250 });
   };
   img.src = displayPath;
 }

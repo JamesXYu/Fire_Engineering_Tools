@@ -181,7 +181,7 @@ const SteelHeatTransferCalculator = {
           ${isUnprotected ? `
           <div class="calc-section">
             <label class="calc-label">Section factor A<sub>m</sub>/V (m⁻¹)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="0.1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" step="0.1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Shadow factor k<sub>sh</sub> (-)</label>
@@ -198,27 +198,27 @@ const SteelHeatTransferCalculator = {
           ` : `
           <div class="calc-section">
             <label class="calc-label">Steel area A<sub>s</sub> (m²)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="0.0001" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" step="0.0001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Protection k (W/mK)</label>
-            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="—" min="0" step="0.001" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Protection ρ (kg/m³)</label>
-            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="—" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Protection c (J/kgK)</label>
-            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="—" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Protection thickness d<sub>p</sub> (m)</label>
-            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="—" min="0" step="0.001" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Protected perimeter A<sub>p</sub> (m)</label>
-            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           `}
         </div>

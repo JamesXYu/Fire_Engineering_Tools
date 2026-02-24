@@ -196,31 +196,31 @@ const TravellingFireCalculator = {
           </div>
           <div class="calc-section">
             <label class="calc-label">Fire Load Density q<sub>fd</sub> (MJ/m²)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Fire HRR Density HRR<sub>density</sub> (MW/m²)</label>
-            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Room Length L (m)</label>
-            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Room Width W (m)</label>
-            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Fire Spread Rate s (m/s)</label>
-            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="-" min="0" step="0.001" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Beam Height H (m)</label>
-            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Beam Position y<sub>beam</sub> (m)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">${input10Label}</label>
@@ -237,7 +237,7 @@ const TravellingFireCalculator = {
             <label class="calc-label">${outputLabel}</label>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
               <div class="calc-output-wrapper">
-                <input type="text" class="calc-output" id="result-${windowId}" placeholder="—" readonly>
+                <input type="text" class="calc-output" id="result-${windowId}" placeholder="" readonly>
                 <span class="calc-output-unit">${outputUnit}</span>
               </div>
             </div>

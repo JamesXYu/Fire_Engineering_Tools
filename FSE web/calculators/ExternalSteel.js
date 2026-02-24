@@ -117,58 +117,58 @@ const ExternalSteelCalculator = {
           </div>
           <div class="calc-section">
             <label class="calc-label">Flame temperature T<sub>f</sub> (K)</label>
-            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="958" min="273" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="" min="273" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Opening temperature T<sub>o</sub> (K)</label>
-            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="973" min="273" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="" min="273" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Distance d<sub>1</sub> (m)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="0.8" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Distance d<sub>2</sub> (m)</label>
-            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="0.42" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input4-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Window width w (m)</label>
-            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="20.88" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input5-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Equivalent height h<sub>eq</sub> (m)</label>
-            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="3.3" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input6-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Horizontal length L<sub>h</sub> (m)</label>
-            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="6.17" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Vertical length L<sub>v</sub> (m)</label>
-            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="2.7" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input8-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           ${!isColumn ? `
           <div class="calc-section">
             <label class="calc-label">Distance d<sub>aw</sub> (m)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="0" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Flame thickness λ<sub>4</sub> (m)</label>
-            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="1" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           ` : `
           <div class="calc-section">
             <label class="calc-label">Flame thickness λ<sub>1</sub> (m)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="10" min="0" step="0.1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="" min="0" step="0.1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Flame thickness λ<sub>3</sub> (m)</label>
-            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="1" min="0" step="0.01" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input10-${windowId}" placeholder="" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           `}
           <div class="calc-section">
             <label class="calc-label">Convection coefficient α<sub>c</sub> (W/m²K)</label>
-            <input type="number" class="calc-input" id="input11-${windowId}" placeholder="25" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input11-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
         </div>
         <div class="calc-divider">
@@ -351,17 +351,17 @@ const ExternalSteelCalculator = {
     const resultEl = getEl('result');
     if (!resultEl) return;
 
-    const T_z = parseFloat(getEl('input1').value) || 958;
-    const T_o = parseFloat(getEl('input2').value) || 973;
-    const d_1 = parseFloat(getEl('input3').value) || 0.8;
-    const d_2 = parseFloat(getEl('input4').value) || 0.42;
-    const w_t = parseFloat(getEl('input5').value) || 20.88;
-    const h_eq = parseFloat(getEl('input6').value) || 3.3;
-    const L_H = parseFloat(getEl('input7').value) || 6.17;
-    const L_L = parseFloat(getEl('input8').value) || 2.7;
-    const lambda_1 = parseFloat(getEl('input9').value) || 10;
-    const lambda_3_or_4 = parseFloat(getEl('input10').value) || 1;
-    const alpha = parseFloat(getEl('input11').value) || 25;
+    const T_z = parseFloat(getEl('input1').value);
+    const T_o = parseFloat(getEl('input2').value);
+    const d_1 = parseFloat(getEl('input3').value);
+    const d_2 = parseFloat(getEl('input4').value);
+    const w_t = parseFloat(getEl('input5').value);
+    const h_eq = parseFloat(getEl('input6').value);
+    const L_H = parseFloat(getEl('input7').value);
+    const L_L = parseFloat(getEl('input8').value);
+    const lambda_1 = parseFloat(getEl('input9').value);
+    const lambda_3_or_4 = parseFloat(getEl('input10').value);
+    const alpha = parseFloat(getEl('input11').value);
     const is_forced_draught = getEl('input12') && getEl('input12').value === 'true';
 
     let result;
@@ -379,8 +379,13 @@ const ExternalSteelCalculator = {
       });
     }
 
-    resultEl.value = result.T_m_C.toFixed(1);
-    resultEl.placeholder = '';
+    if (result && Number.isFinite(result.T_m_C)) {
+      resultEl.value = result.T_m_C.toFixed(1);
+      resultEl.placeholder = '';
+    } else {
+      resultEl.value = '';
+      resultEl.placeholder = '—';
+    }
   },
 
   clear(windowId) {

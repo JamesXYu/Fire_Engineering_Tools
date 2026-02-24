@@ -228,13 +228,12 @@ const FlameheightCalculator = {
       const disabledClass = input.disabled ? 'input-disabled' : '';
       const wrapperDisabledClass = input.disabled ? 'disabled' : '';
       const inputPlaceholder = input.placeholder !== undefined ? `placeholder="${input.placeholder}"` : '';
-      const inputValue = input.defaultValue !== undefined ? `value="${input.defaultValue}"` : '';
       inputHTML += `
         <div class="calc-section ${disabledClass}">
           <label class="calc-label">${input.label}</label>
           <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
             <div class="calc-input-wrapper ${wrapperDisabledClass}">
-              <input type="number" class="calc-input" id="${input.id}-${windowId}" min="0" data-window-id="${windowId}" ${disabledAttr} ${inputPlaceholder} ${inputValue}>
+              <input type="number" class="calc-input" id="${input.id}-${windowId}" min="0" data-window-id="${windowId}" ${disabledAttr} ${inputPlaceholder}>
             </div>
           </div>
         </div>
@@ -603,13 +602,7 @@ const FlameheightCalculator = {
     
     config.inputs.forEach(input => {
       const inputEl = document.getElementById(`${input.id}-${windowId}`);
-      if (inputEl) {
-        if (input.defaultValue !== undefined) {
-          inputEl.value = input.defaultValue;
-        } else {
-          inputEl.value = '';
-        }
-      }
+      if (inputEl) inputEl.value = '';
     });
     
     this.calculate(windowId);

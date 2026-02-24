@@ -79,15 +79,15 @@ const FireGrowthRateCalculator = {
           ${isTime ? `
           <div class="calc-section">
             <label class="calc-label">Time t (s)</label>
-            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="—" min="1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="" min="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Time step Δt (s)</label>
-            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="1" min="0.1" step="0.1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="" min="0.1" step="0.1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Growth factor α (kW/sⁿ)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="0.001" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Growth power n (-)</label>
@@ -96,11 +96,11 @@ const FireGrowthRateCalculator = {
           ` : `
           <div class="calc-section">
             <label class="calc-label">Heat release rate Q (kW)</label>
-            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="—" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Growth factor α (kW/sⁿ)</label>
-            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="—" min="0" step="0.001" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input2-${windowId}" placeholder="" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Growth power n (-)</label>

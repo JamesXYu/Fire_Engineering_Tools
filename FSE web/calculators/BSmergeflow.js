@@ -165,11 +165,11 @@ const BS9999MergeFlowCalculator = {
               <input type="number" class="calc-input" id="method1-input3-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Storey Exit Width W_e (mm)</label>
+              <label class="calc-label">Storey Exit Width W<sub>e</sub> (mm)</label>
               <input type="number" class="calc-input" id="method1-input4-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Door Width per Person w_p (mm/person)</label>
+              <label class="calc-label">Door Width per Person w<sub>p</sub> (mm/person)</label>
               <input type="number" class="calc-input" id="method1-input5-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
           ` : ''}

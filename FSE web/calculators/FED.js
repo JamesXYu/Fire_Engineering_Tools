@@ -129,7 +129,7 @@ const FEDCalculator = {
           </div>
           <div class="calc-section">
             <label class="calc-label">HRR Q (kW)</label>
-            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input3-${windowId}" placeholder="" min="0" step="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Radiative fraction χ<sub>rad</sub> (-)</label>

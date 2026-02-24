@@ -44,7 +44,7 @@ const StrengthReductionFactorCalculator = {
         <div class="calc-input-section">
           <div class="calc-section">
             <label class="calc-label">Steel temperature θ<sub>a</sub> (°C)</label>
-            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="—" min="0" max="1200" step="1" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input1-${windowId}" placeholder="" min="0" max="1200" step="1" data-window-id="${windowId}">
           </div>
         </div>
         <div class="calc-divider">

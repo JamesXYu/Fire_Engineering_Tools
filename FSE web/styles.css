@@ -490,6 +490,11 @@ body {
   flex-shrink: 0;
 }
 
+.calc-label .calc-symbol {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
 .calc-input {
   padding: 12px;
   padding-right: 5px; /* Make room for larger spinner buttons on the right */
