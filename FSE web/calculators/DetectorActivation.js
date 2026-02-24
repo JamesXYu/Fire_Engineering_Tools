@@ -236,43 +236,43 @@ const DetectorActivationCalculator = {
       <div class="form-calculator" id="calc-${windowId}">
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Duration (s)</label>
+            <label class="calc-label">Duration t<sub>end</sub> (s)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Time Step (s)</label>
+            <label class="calc-label">Time Step Δt (s)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Fire Growth Factor (kW/s²)</label>
+            <label class="calc-label">Fire Growth Factor α (kW/s²)</label>
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Height (m)</label>
+            <label class="calc-label">Height z (m)</label>
             <input type="number" class="calc-input" id="input4-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Radial Distance (m)</label>
+            <label class="calc-label">Radial Distance r (m)</label>
             <input type="number" class="calc-input" id="input5-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Response Time Index (m½s½)</label>
+            <label class="calc-label">Response Time Index RTI (m½s½)</label>
             <input type="number" class="calc-input" id="input6-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Conduction factor (m½/s½)</label>
+            <label class="calc-label">Conduction factor C (m½/s½)</label>
             <input type="number" class="calc-input" id="input7-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Activation Temperature (°C)</label>
+            <label class="calc-label">Activation Temperature T<sub>act</sub> (°C)</label>
             <input type="number" class="calc-input" id="input8-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Convection HRR (%)</label>
+            <label class="calc-label">Convection HRR χ<sub>c</sub> (%)</label>
             <input type="number" class="calc-input" id="input9-${windowId}" placeholder="-" min="0" max="100" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">HRR density (kW/m²)</label>
+            <label class="calc-label">HRR density q̇ (kW/m²)</label>
             <input type="number" class="calc-input" id="input10-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
         </div>

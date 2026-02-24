@@ -171,11 +171,11 @@ const SteelHeatTransferCalculator = {
         </div>
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Duration (s)</label>
+            <label class="calc-label">Duration t<sub>end</sub> (s)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="3600" min="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Time step (s)</label>
+            <label class="calc-label">Time step Δt (s)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="30" min="1" data-window-id="${windowId}">
           </div>
           ${isUnprotected ? `
@@ -184,11 +184,11 @@ const SteelHeatTransferCalculator = {
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="0.1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Shadow factor k<sub>sh</sub></label>
+            <label class="calc-label">Shadow factor k<sub>sh</sub> (-)</label>
             <input type="number" class="calc-input" id="input4-${windowId}" placeholder="1.0" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Emissivity ε<sub>m</sub></label>
+            <label class="calc-label">Emissivity ε<sub>m</sub> (-)</label>
             <input type="number" class="calc-input" id="input5-${windowId}" placeholder="0.7" min="0" max="1" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
@@ -197,7 +197,7 @@ const SteelHeatTransferCalculator = {
           </div>
           ` : `
           <div class="calc-section">
-            <label class="calc-label">Steel area A (m²)</label>
+            <label class="calc-label">Steel area A<sub>s</sub> (m²)</label>
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="0.0001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
@@ -213,11 +213,11 @@ const SteelHeatTransferCalculator = {
             <input type="number" class="calc-input" id="input6-${windowId}" placeholder="—" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Protection thickness (m)</label>
+            <label class="calc-label">Protection thickness d<sub>p</sub> (m)</label>
             <input type="number" class="calc-input" id="input7-${windowId}" placeholder="—" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Protected perimeter (m)</label>
+            <label class="calc-label">Protected perimeter A<sub>p</sub> (m)</label>
             <input type="number" class="calc-input" id="input8-${windowId}" placeholder="—" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           `}

@@ -153,23 +153,23 @@ const BS9999MergeFlowCalculator = {
           <!-- Method 1: 5 inputs -->
           ${activeMethod === 'method1' ? `
             <div class="calc-section">
-              <label class="calc-label">Number of People</label>
+              <label class="calc-label">Number of People N (persons)</label>
               <input type="number" class="calc-input" id="method1-input1-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Stair Width (mm)</label>
+              <label class="calc-label">Stair Width W (mm)</label>
               <input type="number" class="calc-input" id="method1-input2-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Distance (m)</label>
+              <label class="calc-label">Distance D (m)</label>
               <input type="number" class="calc-input" id="method1-input3-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label"> Storey Exit Width (mm)</label>
+              <label class="calc-label">Storey Exit Width W_e (mm)</label>
               <input type="number" class="calc-input" id="method1-input4-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label"> Door Width Per Person (mm)</label>
+              <label class="calc-label">Door Width per Person w_p (mm/person)</label>
               <input type="number" class="calc-input" id="method1-input5-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
           ` : ''}
@@ -177,23 +177,23 @@ const BS9999MergeFlowCalculator = {
           <!-- Method 2: 5 inputs -->
           ${activeMethod === 'method2' ? `
             <div class="calc-section">
-              <label class="calc-label">Number of People</label>
+              <label class="calc-label">Number of People N (persons)</label>
               <input type="number" class="calc-input" id="method2-input1-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Stair Width Up (mm)</label>
+              <label class="calc-label">Stair Width Up W_u (mm)</label>
               <input type="number" class="calc-input" id="method2-input2-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Distance (m)</label>
+              <label class="calc-label">Distance D (m)</label>
               <input type="number" class="calc-input" id="method2-input3-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label"> Stair Width Down (mm)</label>
+              <label class="calc-label">Stair Width Down W_d (mm)</label>
               <input type="number" class="calc-input" id="method2-input4-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">  Door Width Per Person (mm)</label>
+              <label class="calc-label">Door Width per Person w_p (mm/person)</label>
               <input type="number" class="calc-input" id="method2-input5-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
           ` : ''}
@@ -201,31 +201,31 @@ const BS9999MergeFlowCalculator = {
           <!-- Method 3: 7 inputs -->
           ${activeMethod === 'method3' ? `
             <div class="calc-section">
-              <label class="calc-label">Upper Level Occupancy</label>
+              <label class="calc-label">Upper Level Occupancy N_u (persons)</label>
               <input type="number" class="calc-input" id="method3-input1-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Basement Level Occupancy</label>
+              <label class="calc-label">Basement Level Occupancy N_b (persons)</label>
               <input type="number" class="calc-input" id="method3-input2-${windowId}"  min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Stair Width Up (mm)</label>
+              <label class="calc-label">Stair Width Up W_u (mm)</label>
               <input type="number" class="calc-input" id="method3-input3-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Stair Width Down (mm)</label>
+              <label class="calc-label">Stair Width Down W_d (mm)</label>
               <input type="number" class="calc-input" id="method3-input4-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Storey Exit Width (mm)</label>
+              <label class="calc-label">Storey Exit Width W_e (mm)</label>
               <input type="number" class="calc-input" id="method3-input5-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label">Distance (m)</label>
+              <label class="calc-label">Distance D (m)</label>
               <input type="number" class="calc-input" id="method3-input6-${windowId}" min="0" data-window-id="${windowId}">
             </div>
             <div class="calc-section">
-              <label class="calc-label"> Door Width Per Person (mm)</label>
+              <label class="calc-label">Door Width per Person w_p (mm/person)</label>
               <input type="number" class="calc-input" id="method3-input7-${windowId}" min="0" data-window-id="${windowId}">
             </div>
           ` : ''}

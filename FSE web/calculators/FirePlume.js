@@ -62,19 +62,19 @@ const FirePlumeCalculator = {
       <div class="form-calculator" id="calc-${windowId}">
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Convective HRR (kW)</label>
+            <label class="calc-label">Convective HRR Q<sub>c</sub> (kW)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Height (m)</label>
+            <label class="calc-label">Height z (m)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">HRR Density (kW/m²)</label>
+            <label class="calc-label">HRR Density q̇ (kW/m²)</label>
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Ambient Temp (K)</label>
+            <label class="calc-label">Ambient Temp T<sub>∞</sub> (K)</label>
             <input type="number" class="calc-input" id="input4-${windowId}" placeholder="293.15" min="0" data-window-id="${windowId}">
           </div>
         </div>

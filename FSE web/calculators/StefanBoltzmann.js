@@ -80,7 +80,7 @@ const StefanBoltzmannCalculator = {
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="20" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Emissivity ε</label>
+            <label class="calc-label">Emissivity ε (-)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="1.0" min="0" max="1" step="0.01" data-window-id="${windowId}">
           </div>
           ${isTemperature ? `

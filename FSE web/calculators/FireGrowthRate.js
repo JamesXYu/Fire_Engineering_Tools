@@ -78,11 +78,11 @@ const FireGrowthRateCalculator = {
         <div class="calc-input-section">
           ${isTime ? `
           <div class="calc-section">
-            <label class="calc-label">Time (s)</label>
+            <label class="calc-label">Time t (s)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="—" min="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Time step (s)</label>
+            <label class="calc-label">Time step Δt (s)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="1" min="0.1" step="0.1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
@@ -90,7 +90,7 @@ const FireGrowthRateCalculator = {
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Growth power n</label>
+            <label class="calc-label">Growth power n (-)</label>
             <input type="number" class="calc-input" id="input4-${windowId}" placeholder="2" min="0.1" step="0.1" data-window-id="${windowId}">
           </div>
           ` : `
@@ -103,7 +103,7 @@ const FireGrowthRateCalculator = {
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="—" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Growth power n</label>
+            <label class="calc-label">Growth power n (-)</label>
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="2" min="0.1" step="0.1" data-window-id="${windowId}">
           </div>
           `}

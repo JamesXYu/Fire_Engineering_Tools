@@ -168,7 +168,7 @@ const TravellingFireCalculator = {
 
   getHTML(windowId) {
     const activeMethod = TravellingFireMethodStorage[windowId] || this.getActiveMethod(windowId);
-    const input10Label = activeMethod === 'temperature' ? 'Max Near Field T (°C)' : 'Max Near Field Flux (kW/m²)';
+    const input10Label = activeMethod === 'temperature' ? 'Max Near Field Temp T<sub>nf,max</sub> (°C)' : 'Max Near Field Flux q<sub>nf,max</sub> (kW/m²)';
     const input10Placeholder = activeMethod === 'temperature' ? '1200' : '300';
     const outputLabel = activeMethod === 'temperature' ? 'Peak Gas Temperature' : 'Peak Incident Heat Flux';
     const outputUnit = activeMethod === 'temperature' ? '°C' : 'kW/m²';
@@ -187,39 +187,39 @@ const TravellingFireCalculator = {
         </div>
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Duration (s)</label>
+            <label class="calc-label">Duration t<sub>end</sub> (s)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="3600" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Time Step (s)</label>
+            <label class="calc-label">Time Step Δt (s)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="1" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Fire Load Density (MJ/m²)</label>
+            <label class="calc-label">Fire Load Density q<sub>fd</sub> (MJ/m²)</label>
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Fire HRR Density (MW/m²)</label>
+            <label class="calc-label">Fire HRR Density HRR<sub>density</sub> (MW/m²)</label>
             <input type="number" class="calc-input" id="input4-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Room Length (m)</label>
+            <label class="calc-label">Room Length L (m)</label>
             <input type="number" class="calc-input" id="input5-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Room Width (m)</label>
+            <label class="calc-label">Room Width W (m)</label>
             <input type="number" class="calc-input" id="input6-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Fire Spread Rate (m/s)</label>
+            <label class="calc-label">Fire Spread Rate s (m/s)</label>
             <input type="number" class="calc-input" id="input7-${windowId}" placeholder="-" min="0" step="0.001" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Beam Height (m)</label>
+            <label class="calc-label">Beam Height H (m)</label>
             <input type="number" class="calc-input" id="input8-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Beam Position (m)</label>
+            <label class="calc-label">Beam Position y<sub>beam</sub> (m)</label>
             <input type="number" class="calc-input" id="input9-${windowId}" placeholder="-" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">

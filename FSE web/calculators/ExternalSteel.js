@@ -105,7 +105,7 @@ const ExternalSteelCalculator = {
         </div>
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Forced draught</label>
+            <label class="calc-label">Forced draught mode (-)</label>
             <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
               <div class="calc-input-wrapper">
                 <select class="calc-input calc-dropdown" id="input12-${windowId}" data-window-id="${windowId}">
@@ -116,35 +116,35 @@ const ExternalSteelCalculator = {
             </div>
           </div>
           <div class="calc-section">
-            <label class="calc-label">Flame temperature (K)</label>
+            <label class="calc-label">Flame temperature T<sub>f</sub> (K)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="958" min="273" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Opening temperature (K)</label>
+            <label class="calc-label">Opening temperature T<sub>o</sub> (K)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="973" min="273" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Distance 1 (m)</label>
+            <label class="calc-label">Distance d<sub>1</sub> (m)</label>
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="0.8" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Distance 2 (m)</label>
+            <label class="calc-label">Distance d<sub>2</sub> (m)</label>
             <input type="number" class="calc-input" id="input4-${windowId}" placeholder="0.42" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Window width (m)</label>
+            <label class="calc-label">Window width w (m)</label>
             <input type="number" class="calc-input" id="input5-${windowId}" placeholder="20.88" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Equivalent height (m)</label>
+            <label class="calc-label">Equivalent height h<sub>eq</sub> (m)</label>
             <input type="number" class="calc-input" id="input6-${windowId}" placeholder="3.3" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Horizontal length (m)</label>
+            <label class="calc-label">Horizontal length L<sub>h</sub> (m)</label>
             <input type="number" class="calc-input" id="input7-${windowId}" placeholder="6.17" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Vertical length (m)</label>
+            <label class="calc-label">Vertical length L<sub>v</sub> (m)</label>
             <input type="number" class="calc-input" id="input8-${windowId}" placeholder="2.7" min="0" step="0.01" data-window-id="${windowId}">
           </div>
           ${!isColumn ? `
@@ -167,7 +167,7 @@ const ExternalSteelCalculator = {
           </div>
           `}
           <div class="calc-section">
-            <label class="calc-label">Convection coefficient (W/m²K)</label>
+            <label class="calc-label">Convection coefficient α<sub>c</sub> (W/m²K)</label>
             <input type="number" class="calc-input" id="input11-${windowId}" placeholder="25" min="0" data-window-id="${windowId}">
           </div>
         </div>

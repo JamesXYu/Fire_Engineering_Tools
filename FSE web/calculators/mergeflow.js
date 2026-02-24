@@ -46,15 +46,15 @@ const MergeFlowCalculator = {
       <div class="form-calculator" id="calc-${windowId}">
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Number of People</label>
+            <label class="calc-label">Number of People N (persons)</label>
             <input type="number" class="calc-input" id="people-${windowId}"  min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Stair Width (mm)</label>
+            <label class="calc-label">Stair Width W (mm)</label>
             <input type="number" class="calc-input" id="stair-${windowId}"  min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Distance (m)</label>
+            <label class="calc-label">Distance D (m)</label>
             <input type="number" class="calc-input" id="distance-${windowId}"  min="0" data-window-id="${windowId}">
           </div>
         </div>

@@ -104,7 +104,7 @@ const FEDCalculator = {
       <div class="form-calculator form-calculator-timeseries" id="calc-${windowId}" style="min-width: 380px;">
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Walking speed (m/s)</label>
+            <label class="calc-label">Walking speed v (m/s)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="1.2" min="0.01" step="0.1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
@@ -116,11 +116,11 @@ const FEDCalculator = {
             <input type="number" class="calc-input" id="input3-${windowId}" placeholder="—" min="0" step="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Radiative fraction χ<sub>rad</sub></label>
+            <label class="calc-label">Radiative fraction χ<sub>rad</sub> (-)</label>
             <input type="number" class="calc-input" id="input4-${windowId}" placeholder="0.4" min="0" max="1" step="0.01" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Endpoint dose r (kW/m²)<sup>1.33</sup>·min</label>
+            <label class="calc-label">Endpoint dose r ((kW/m²)<sup>1.33</sup>·min)</label>
             <input type="number" class="calc-input" id="input5-${windowId}" placeholder="1.67" min="0" step="0.01" data-window-id="${windowId}">
           </div>
         </div>
@@ -142,9 +142,9 @@ const FEDCalculator = {
             </colgroup>
             <thead>
               <tr>
-                <th style="${thStyle}">Pt</th>
+                <th style="${thStyle}"></th>
                 <th style="${thStyle}">Distance to fire D (m)</th>
-                <th style="${thStyle}">Segmented travel distance (m)</th>
+                <th style="${thStyle}">Segmented travel distance L (m)</th>
               </tr>
             </thead>
             <tbody id="fed-path-body-${windowId}">

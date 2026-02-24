@@ -94,13 +94,13 @@ const ExternalfirespreadCalculator = {
     const configs = {
       '1-4': { // Method A: 5 enabled, 2 disabled, checkbox, 3 outputs
         inputs: [
-          { id: 'input1', label: 'Emitter Width (m)' },
-          { id: 'input2', label: 'Emitter Height (m)' },
-          { id: 'input3', label: 'Boundary Distance (m)' },
-          { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
-          { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
-          { id: 'input6', label: 'Horizontal Location (m)', disabled: true , placeholder:'0'},
-          { id: 'input7', label: 'Vertical Location (m)', disabled: true , placeholder:'0'}
+          { id: 'input1', label: 'Emitter Width w (m)' },
+          { id: 'input2', label: 'Emitter Height h (m)' },
+          { id: 'input3', label: 'Boundary Distance d (m)' },
+          { id: 'input4', label: 'Emitter Heat Flux q<sub>e</sub> (kW/m²)' },
+          { id: 'input5', label: 'Critical Heat Flux q<sub>crit</sub> (kW/m²)' },
+          { id: 'input6', label: 'Horizontal Location x (m)', disabled: true , placeholder:'0'},
+          { id: 'input7', label: 'Vertical Location y (m)', disabled: true , placeholder:'0'}
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit: '%' },
@@ -111,13 +111,13 @@ const ExternalfirespreadCalculator = {
       },
       '1-5': { // Method B: 5 enabled, 2 disabled, checkbox, 3 outputs
         inputs: [
-          { id: 'input1', label: 'Emitter Width (m)' },
-          { id: 'input2', label: 'Emitter Height (m)' },
-          { id: 'input3', label: 'Unprotected Area (%)' },
-          { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
-          { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
-          { id: 'input6', label: 'Horizontal Location (m)', disabled: true, placeholder:'0' },
-          { id: 'input7', label: 'Vertical Location (m)', disabled: true , placeholder:'0'}
+          { id: 'input1', label: 'Emitter Width w (m)' },
+          { id: 'input2', label: 'Emitter Height h (m)' },
+          { id: 'input3', label: 'Unprotected Area A<sub>u</sub> (%)' },
+          { id: 'input4', label: 'Emitter Heat Flux q<sub>e</sub> (kW/m²)' },
+          { id: 'input5', label: 'Critical Heat Flux q<sub>crit</sub> (kW/m²)' },
+          { id: 'input6', label: 'Horizontal Location x (m)', disabled: true, placeholder:'0' },
+          { id: 'input7', label: 'Vertical Location y (m)', disabled: true , placeholder:'0'}
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit: '%' },
@@ -128,14 +128,14 @@ const ExternalfirespreadCalculator = {
       },
       '2-4': { // Method C: 6 enabled, 2 disabled, checkbox, 3 outputs
         inputs: [
-          { id: 'input1', label: 'Emitter Width (m)' },
-          { id: 'input2', label: 'Emitter Height (m)' },
-          { id: 'input3', label: 'Boundary Distance (m)' },
-          { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
-          { id: 'input5', label: 'Critical Heat Flux (kw/m²)' },
-          { id: 'input6', label: 'Angle (°)', placeholder: '90', defaultValue: 90 },
-          { id: 'input7', label: 'Horizontal Location (m)', disabled: true, placeholder:'0' },
-          { id: 'input8', label: 'Vertical Location (m)', disabled: true, placeholder: '0' }
+          { id: 'input1', label: 'Emitter Width w (m)' },
+          { id: 'input2', label: 'Emitter Height h (m)' },
+          { id: 'input3', label: 'Boundary Distance d (m)' },
+          { id: 'input4', label: 'Emitter Heat Flux q<sub>e</sub> (kW/m²)' },
+          { id: 'input5', label: 'Critical Heat Flux q<sub>crit</sub> (kW/m²)' },
+          { id: 'input6', label: 'Angle θ (°)', placeholder: '90', defaultValue: 90 },
+          { id: 'input7', label: 'Horizontal Location x (m)', disabled: true, placeholder:'0' },
+          { id: 'input8', label: 'Vertical Location y (m)', disabled: true, placeholder: '0' }
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit: '%' },
@@ -146,14 +146,14 @@ const ExternalfirespreadCalculator = {
       },
       '2-5': { // Method D: 6 enabled, 2 disabled, checkbox, 3 outputs
         inputs: [
-          { id: 'input1', label: 'Emitter Width (m)' },
-          { id: 'input2', label: 'Emitter Height (m)' },
-          { id: 'input3', label: 'Unprotected Area (%)' },
-          { id: 'input4', label: 'Emitter Heat Flux (kW/m²)' },
-          { id: 'input5', label: 'Critical Heat Flux (kW/m²)' },
-          { id: 'input6', label: 'Angle (°)', placeholder: '90', defaultValue: 90},
-          { id: 'input7', label: 'Horizontal Location (m)', disabled: true , placeholder:'0'},
-          { id: 'input8', label: 'Vertical Location (m)', disabled: true , placeholder:'0'}
+          { id: 'input1', label: 'Emitter Width w (m)' },
+          { id: 'input2', label: 'Emitter Height h (m)' },
+          { id: 'input3', label: 'Unprotected Area A<sub>u</sub> (%)' },
+          { id: 'input4', label: 'Emitter Heat Flux q<sub>e</sub> (kW/m²)' },
+          { id: 'input5', label: 'Critical Heat Flux q<sub>crit</sub> (kW/m²)' },
+          { id: 'input6', label: 'Angle θ (°)', placeholder: '90', defaultValue: 90},
+          { id: 'input7', label: 'Horizontal Location x (m)', disabled: true , placeholder:'0'},
+          { id: 'input8', label: 'Vertical Location y (m)', disabled: true , placeholder:'0'}
         ],
         outputs: [
           { id: 'output1', label: 'View Factor', unit:'%' },

@@ -90,30 +90,30 @@ const FlameheightCalculator = {
   getMethodConfig(method, subMethod) {
     // Common inputs with default values for inputs 2-5
     const commonInputs = [
-      { id: 'input1', label: 'Total HRR (kW)' },
-      { id: 'input2', label: 'Air Density (kg/m³)', defaultValue: 1.2, placeholder: '1.2' },
-      { id: 'input3', label: 'Air Heat Capacity (KJ/(kg K))', defaultValue: 1.0, placeholder: '1.0' },
-      { id: 'input4', label: 'Air Temperature (K)', defaultValue: 293, placeholder: '293' },
-      { id: 'input5', label: 'Gravity (m/s²)', defaultValue: 9.81, placeholder: '9.81' }
+      { id: 'input1', label: 'Total HRR Q (kW)' },
+      { id: 'input2', label: 'Air Density ρ (kg/m³)', defaultValue: 1.2, placeholder: '1.2' },
+      { id: 'input3', label: 'Air Heat Capacity c<sub>p</sub> (kJ/(kg·K))', defaultValue: 1.0, placeholder: '1.0' },
+      { id: 'input4', label: 'Air Temperature T<sub>∞</sub> (K)', defaultValue: 293, placeholder: '293' },
+      { id: 'input5', label: 'Gravity g (m/s²)', defaultValue: 9.81, placeholder: '9.81' }
     ];
     
     // Method 1 inputs: Fire Diameter (6 inputs) + dropdown for sub-method
     const method1Inputs = [
       ...commonInputs,
-      { id: 'input6', label: 'Fire Diameter (m)' }
+      { id: 'input6', label: 'Fire Diameter D (m)' }
     ];
     
     // Method 2 inputs: Fire Length (6 inputs)
     const method2Inputs = [
       ...commonInputs,
-      { id: 'input6', label: 'Fire Length (m)' }
+      { id: 'input6', label: 'Fire Length L (m)' }
     ];
     
     // Method 3 inputs: Fire Long Dimension + Fire Short Dimension (7 inputs)
     const method3Inputs = [
       ...commonInputs,
-      { id: 'input6', label: 'Fire Long Dimension (m)' },
-      { id: 'input7', label: 'Fire Short Dimension (m)' }
+      { id: 'input6', label: 'Fire Long Dimension L (m)' },
+      { id: 'input7', label: 'Fire Short Dimension W (m)' }
     ];
     
     // Base outputs (2 outputs)

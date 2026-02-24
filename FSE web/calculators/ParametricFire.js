@@ -279,11 +279,11 @@ const ParametricFireCalculator = {
         </div>
         <div class="calc-input-section">
           <div class="calc-section">
-            <label class="calc-label">Duration (s)</label>
+            <label class="calc-label">Duration t<sub>end</sub> (s)</label>
             <input type="number" class="calc-input" id="input1-${windowId}" placeholder="3600" min="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">Time step (s)</label>
+            <label class="calc-label">Time step Δt (s)</label>
             <input type="number" class="calc-input" id="input2-${windowId}" placeholder="60" min="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
@@ -357,7 +357,7 @@ const ParametricFireCalculator = {
             <input type="number" class="calc-input" id="input9-${windowId}" placeholder="—" min="100" max="1300" step="1" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
-            <label class="calc-label">γ<sub>fi,Q</sub></label>
+            <label class="calc-label">γ<sub>fi,Q</sub> (-)</label>
             <input type="number" class="calc-input" id="input10-${windowId}" placeholder="1.0" min="0.1" step="0.1" data-window-id="${windowId}">
           </div>
           `}
