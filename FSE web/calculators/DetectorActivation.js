@@ -261,7 +261,7 @@ const DetectorActivationCalculator = {
           </div>
           <div class="calc-section">
             <label class="calc-label">Conduction factor C (m½/s½)</label>
-            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="66.7" min="0" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input7-${windowId}" placeholder="" min="0" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">Activation Temperature T<sub>act</sub> (°C)</label>
@@ -269,7 +269,7 @@ const DetectorActivationCalculator = {
           </div>
           <div class="calc-section">
             <label class="calc-label">Convection HRR χ<sub>c</sub> (%)</label>
-            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="" min="0" max="100" data-window-id="${windowId}">
+            <input type="number" class="calc-input" id="input9-${windowId}" placeholder="66.7" min="0" max="100" data-window-id="${windowId}">
           </div>
           <div class="calc-section">
             <label class="calc-label">HRR density q̇ (kW/m²)</label>
@@ -440,9 +440,9 @@ const DetectorActivationCalculator = {
     const input4El = document.getElementById(`input4-${windowId}`);
     const input5El = document.getElementById(`input5-${windowId}`);
     const input6El = document.getElementById(`input6-${windowId}`);
-    const input7El = document.getElementById(`input7-${windowId}`) || 66.7;
+    const input7El = document.getElementById(`input7-${windowId}`);
     const input8El = document.getElementById(`input8-${windowId}`) || 68;
-    const input9El = document.getElementById(`input9-${windowId}`);
+    const input9El = document.getElementById(`input9-${windowId}`) || 66.7;
     const input10El = document.getElementById(`input10-${windowId}`);
     const result1El = document.getElementById(`result1-${windowId}`);
     const result2El = document.getElementById(`result2-${windowId}`);
