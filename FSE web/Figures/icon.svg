@@ -1,1 +1,85 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" width="1000" height="1000" viewBox="0 0 264.58 264.58"><defs><linearGradient id="b"><stop offset="0" stop-color="#fd8315"/><stop offset="1" stop-color="#fa6b14"/></linearGradient><linearGradient id="a"><stop offset="0" stop-color="#f24b1b"/><stop offset="1" stop-color="#dc2f12"/></linearGradient><linearGradient xlink:href="#a" id="d" x1="172.49" x2="179.1" y1="64.48" y2="197.19" gradientUnits="userSpaceOnUse"/><linearGradient xlink:href="#b" id="c" x1="118.9" x2="117.99" y1="14.21" y2="194.34" gradientUnits="userSpaceOnUse"/></defs><g stroke-linecap="round" stroke-linejoin="round" stroke-width=".13"><path fill="url(#c)" stroke="#f14a1b" d="m115.13 9.96-.26.01c-.97.11-1.29 1.02-.75 2.38a45.6 45.6 0 0 1 3.02 15.68c-.09 8.46.04 12.87-7.31 23.68s-23.16 21.9-33.96 34.66c-10.8 12.76-12.28 16.6-16.1 26.2A90.42 90.42 0 0 0 53.05 146c0 41.29 27.68 76.09 65.49 86.91 35.3-25.9 55.47-125.62 55.47-125.62s-14.45-10.54-18.57-18.89c-1.26-2.56-1.97-6.15-1.97-9.58.01-2.54 1.3-8.72 1.47-9.41a42.4 42.4 0 0 0 .94-12.14c-.07-.95-.17-1.9-.3-2.84v-.01a59.45 59.45 0 0 0-7.6-19h0a60.34 60.34 0 0 0-10.24-12.13 66.97 66.97 0 0 0-21.7-13.15 2.94 2.94 0 0 0-.92-.18z"/><path fill="url(#d)" stroke="#510a0c" d="M170.01 58.08a66.66 66.66 0 0 0-10.24 15.94 66.66 66.66 0 0 0-6.3 27.82 66.8 66.8 0 0 0 3.66 20.86h-.08l7.08 105.8s37.38-25.1 45.9-61a74.13 74.13 0 0 0 2.04-25.93c-1.34-14.35-4.35-21.67-9.85-30.3-5.5-8.62-10.36-14-17.63-22.78-6.17-7.43-9.44-18.25-10.39-28.87-.28-3.13-2.13-3.91-4.19-1.54z"/></g><path fill="#510a0c" d="M93.45 115.81h77.91c9.81 0 17.71 7.9 17.71 17.7v104.53c0 9.81-7.9 17.71-17.7 17.71H93.44c-9.81 0-17.71-7.9-17.71-17.7V133.51c0-9.81 7.9-17.71 17.7-17.71z"/><path fill="#e83c1b" d="M91.95 163.12h29.23c3.7 0 6.68 2.98 6.68 6.68v24.8c0 3.7-2.98 6.68-6.68 6.68H91.95a6.67 6.67 0 0 1-6.68-6.68v-24.8c0-3.7 2.98-6.68 6.68-6.68zm0 45.92h29.23c3.7 0 6.68 2.98 6.68 6.68v24.8c0 3.7-2.98 6.68-6.68 6.68H91.95a6.67 6.67 0 0 1-6.68-6.69v-24.8c0-3.7 2.98-6.67 6.68-6.67zm51.25-45.92h29.23c3.7 0 6.68 2.98 6.68 6.68v24.8c0 3.7-2.98 6.68-6.68 6.68H143.2a6.67 6.67 0 0 1-6.68-6.68v-24.8c0-3.7 2.98-6.68 6.68-6.68zm0 45.92h29.23c3.7 0 6.68 2.98 6.68 6.68v24.8c0 3.7-2.98 6.68-6.68 6.68H143.2a6.67 6.67 0 0 1-6.68-6.69v-24.8c0-3.7 2.98-6.67 6.68-6.67z"/><g fill="#520a0c"><path d="M148.74 179.98h18.29a2.41 2.41 0 1 1 0 4.84h-18.29a2.41 2.41 0 1 1 0-4.84zm-51.54.04h18.29a2.41 2.41 0 1 1 0 4.83h-18.3a2.41 2.41 0 1 1 0-4.83z"/><path d="M108.76 173.3v18.28a2.41 2.41 0 1 1-4.84 0V173.3a2.41 2.41 0 1 1 4.84 0zm-10.59 59.18 12.93-12.93a2.41 2.41 0 1 1 3.42 3.42l-12.93 12.93a2.41 2.41 0 1 1-3.42-3.42z"/><path d="m101.59 219.55 12.93 12.93a2.41 2.41 0 1 1-3.42 3.42l-12.93-12.93a2.41 2.41 0 1 1 3.42-3.42zm47.15 1.49h18.29a2.41 2.41 0 1 1 0 4.84h-18.29a2.41 2.41 0 1 1 0-4.84zm0 10.73h18.29a2.41 2.41 0 1 1 0 4.84h-18.29a2.41 2.41 0 1 1 0-4.84z"/></g><path fill="#fcf2e4" d="M92.35 125.2h79.67a7.07 7.07 0 0 1 7.09 7.1v14.36a7.07 7.07 0 0 1-7.09 7.1H92.35a7.07 7.07 0 0 1-7.08-7.1V132.3a7.07 7.07 0 0 1 7.08-7.09z"/></svg>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 主体背景：深碳灰到午夜蓝 -->
+    <linearGradient id="bodyGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e2229"/>
+      <stop offset="100%" stop-color="#0f1115"/>
+    </linearGradient>
+
+    <!-- 外边框：冷银灰/钛金属质感 -->
+    <linearGradient id="rimGradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6b7280"/>
+      <stop offset="50%" stop-color="#374151"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+
+    <!-- 屏幕区域：深空蓝 -->
+    <linearGradient id="screenGradient" x1="0" y1="0" x2="0" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+
+    <!-- 火焰：暖琥珀色 -->
+    <linearGradient id="flameGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="60%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+
+    <!-- 按钮：更亮的青石色，并带明显上下渐变以增强立体感 -->
+    <linearGradient id="buttonGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748b"/> <!-- 顶部亮灰蓝 -->
+      <stop offset="100%" stop-color="#334155"/> <!-- 底部深青石 -->
+    </linearGradient>
+
+    <!-- 按钮顶部高光 -->
+    <linearGradient id="buttonHighlight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#94a3b8" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#94a3b8" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- 整体投影效果 -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+
+    <!-- 按钮的悬浮阴影效果（让按钮凸出） -->
+    <filter id="buttonShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <!-- 底部深色投影 -->
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000000" flood-opacity="0.8"/>
+      <!-- 顶部微弱反光（模拟环境光） -->
+      <feDropShadow dx="0" dy="-2" stdDeviation="2" flood-color="#94a3b8" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- 外边框 (银灰钛金属) -->
+  <rect x="20" y="20" width="472" height="472" rx="100" fill="url(#rimGradient)" filter="url(#shadow)"/>
+
+  <!-- 主体内壳 (深碳灰) -->
+  <rect x="45" y="45" width="422" height="422" rx="80" fill="url(#bodyGradient)"/>
+
+  <!-- 屏幕区域 -->
+  <rect x="100" y="100" width="312" height="130" rx="40" fill="url(#screenGradient)" stroke="#374151" stroke-opacity="0.5" stroke-width="2"/>
+
+  <!-- 火焰图标 -->
+  <g filter="url(#shadow)">
+    <path d="M256 115 C256 115 210 160 210 195 C210 220 230 240 256 240 C282 240 302 220 302 195 C302 160 256 115 256 115 Z" fill="url(#flameGradient)"/>
+    <path d="M256 145 C256 145 235 170 235 190 C235 205 245 215 256 215 C267 215 277 205 277 190 C277 170 256 145 256 145 Z" fill="#fcd34d" fill-opacity="0.3"/>
+  </g>
+
+
+  <circle cx="150" cy="285" r="28" fill="url(#buttonGradient)" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" filter="url(#buttonShadow)"/>
+  <circle cx="256" cy="285" r="28" fill="url(#buttonGradient)" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" filter="url(#buttonShadow)"/>
+  <circle cx="362" cy="285" r="28" fill="url(#buttonGradient)" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" filter="url(#buttonShadow)"/>
+
+  <circle cx="150" cy="375" r="28" fill="url(#buttonGradient)" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" filter="url(#buttonShadow)"/>
+  <circle cx="256" cy="375" r="28" fill="url(#buttonGradient)" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" filter="url(#buttonShadow)"/>
+  <circle cx="362" cy="375" r="28" fill="url(#buttonGradient)" stroke="#94a3b8" stroke-opacity="0.2" stroke-width="1.5" filter="url(#buttonShadow)"/>
+
+  <circle cx="150" cy="278" r="18" fill="url(#buttonHighlight)"/>
+  <circle cx="256" cy="278" r="18" fill="url(#buttonHighlight)"/>
+  <circle cx="362" cy="278" r="18" fill="url(#buttonHighlight)"/>
+  <circle cx="150" cy="368" r="18" fill="url(#buttonHighlight)"/>
+  <circle cx="256" cy="368" r="18" fill="url(#buttonHighlight)"/>
+  <circle cx="362" cy="368" r="18" fill="url(#buttonHighlight)"/>
+</svg>
